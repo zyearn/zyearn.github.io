@@ -3,7 +3,7 @@ layout: post
 title: "我所理解的老师"
 date: 2013-03-30 21:06
 comments: true
-categories: "生活思考"
+categories: thoughts
 ---
 
 随着年龄的增长，我对老师的理解和标准也越来越高。
