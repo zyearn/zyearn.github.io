@@ -17,4 +17,4 @@ footer: true
 
 关于我的博客：
 
-第一个博客是CSDN，写一些技术文章，然后wordpress用了一年多，然后转用octopress。
+大一大二的时候用CSDN写[blog](http://blog.csdn.net/zyearn/)，写一些技术文章，然后wordpress用了一年多，现在这个博客是octopress搭的。
