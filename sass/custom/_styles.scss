@@ -1,186 +1,175 @@
 // This File is imported last, and will override other styles in the cascade
 // Add styles here to make changes without digging in too much
 
-@font-face {
-	  font-family: "League";
-	    src: url('/font/LeagueGothic.otf');
+/* 自定义的样式 */
+p,blockquote,ul,ol{margin-bottom: 0.618em}  /* 调整行距*/
+
+@media only screen and (min-width:992px) {
+h1 {
+    font-size:2.2em
+}
 }
 
-a:visited, #content .blog-index article h1 a:hover { color: #1863A1; }
-
-
-/* ----- main layout ----- */
-
-
-html { background: #262C33 url("/images/line-tile.png"); }
-
-body { font-size: 1em; }
-
-body > div { background-image: none; }
-
-body > div > div { background-image: none; }
-
-
-/* ----- header ----- */
-
-
-body > header{
-	  background: none;
-				    padding: 1.6em 0 1em 0
+blockquote{
+	font-family:Arial, 楷体_GB2312, sans-serif;
 }
 
-body > header h1{
-	  font-size: 2.8em;
-	    padding-left: 20px;
-		  text-shadow: rgba(0, 0, 0, 0.8) 0 0 8px;
+/* 提示框样式 */
+
+.info, .warning{
+
+	border:none;
+	padding:0.6em 1.25em 0.6em 48px;
+	margin-top:0.25em;
+
+	-webkit-border-radius: 8px;
+	-moz-border-radius: 8px;
+	border-radius: 8px;
+	
+	-webkit-box-shadow: 0 4px 4px rgba(0, 0, 0, 0.3);
+	-moz-box-shadow: 0 4px 4px rgba(0, 0, 0, 0.3);
+	-box-shadow: 0 4px 4px rgba(0, 0, 0, 0.3);
 }
 
-body > header h2{
-	  font-size: 0.5em;
-	    letter-spacing: 1px;
-		  margin-top: -1.4em;
-		    padding-left: 20px;
+.info{
+	background:#d5e9f6 url(/cn/images/blog/tab_info.gif) no-repeat left top;
 }
 
-body > nav {
-	  padding-top: .15em;
-	    padding-bottom: .15em;
-}
-
-body > nav a{
-	  font-size: 1em;
-	    line-height: 1.4em;
-}
-
-body > nav form .search{
-	  padding: .2em .3em;
+.warning{
+	background:#f9d9d8 url(/cn/images/blog/tab_red.gif) no-repeat left top;
 }
 
 
-/* ----- Content ----- */
 
+/* -----表格样式----- */
 
-#content .blog-index article h1 {
-	  font-size: 1.8em;
-	    font-weight: normal;
+.datalist{
+    border:1px solid #007eff;
+    border-collapse:collapse;
+	margin: 20px auto 20px auto;
+	
 }
 
-#content .blog-index article h1, #content .blog-index article h1 a, article header h1, article header h1 a{
-	  color: #555555 !important;
+.datalist caption{
+	font-weight:bold;
+	text-align:center;
 }
 
-h1 { font-size: 1.8em; }
-
-h1 span{
-	  font-weight: normal;
-	    color: #E0841B;
+.datalist th{
+    border:1px solid #429fff;
+    background-color:#d2e8ff;
+    font-weight:bold;
+    padding-top:4px;
+    padding-bottom:4px;
+    padding-left:10px;
+    padding-right:10px;
+    text-align:center;
 }
 
-article h2, article h3, article header h1{
-	  font-weight: normal;
+.datalist td{
+      border:1px solid #429fff;
+      text-align:left;
+      padding:4px;
 }
 
-.blog-index article h1 a:hover{ text-decoration: none; }
-
-article p {
-	  text-align:justify;
-	    margin-bottom: 1em;
+.datalist tr:hover{
+    background-color:#c4e4fe;
 }
 
+/* -------------- */
 
-/* ----- Sidebar ----- */
-
-
-aside.sidebar section h1 { letter-spacing: 0.1em; }
-
-aside.sidebar a { text-decoration: none; }
-
-.toggle-sidebar{display: none;}
-
-ul#gh\_repos > li > a{
-	  display: block;
-			     font-weight: bold;
-				   margin-bottom: 0.4em;
-}
-
-/* make list looks better */
-ul {
-	  margin-left:18px
-}
-
-aside.sidebar{
-	  -moz-border-radius-topright: 0.4em;
-	    -webkit-border-radius: 0 0.4em 0 0;
-		  border-radius: 0 0.4em 0 0;
+.none-left-margin{
+    padding-left: 0;
 }
 
 
-/* ----- Footer ----- */
 
+/* -----侧边栏样式----- */
 
-body > footer{
-	  -moz-border-radius: 0;
-	    -webkit-border-radius: 0;
-		  border-radius:0;
-		    margin-bottom: 0;
+.blogroll a{
+    text-decoration:none;
+
+}
+
+#recent_posts a{
+    text-decoration:none;
+
+}
+
+#copyleft a{
+    text-decoration:none;
+}
+
+#comment_sidebar a{
+    text-decoration:none;
+}
+
+#comment_sidebar ul{
+    padding-left:0;
+}
+
+#categories_tag a{
+    text-decoration:none;
+
 }
 
 
-/* ----- 404 ----- */
+
+/*--- 关于脚注 ---*/
+div.footnotes{
+	border-top: 1px dashed grey;
+	font-size: 0.8em;
+	
+}
+
+div.footnotes > ol:before{
+	margin-left: -20px;
+	content: "脚注： ";
+}
+
+.footnotes blockquote{
+	font-size: 0.8em;
+}
+
+a[rel="footnote"]:after{
+	content: "]";
+}
+
+a[rel="footnote"]:before{
+	content: "[";
+}
+
+a[rev="footnote"]:after{
+	content: "]";
+}
+
+a[rev="footnote"]:before{
+	content: "[";
+}
+
+/*--- 关于脚注结束 ---*/
 
 
-.notfound404 article{
-	  margin-left: 0 !important;
+pre code{
+	color:#DDD;
 }
 
 
-/* ----- Media queries ----- */
+div.showbox{
+	margin: 15px auto 15px auto;
+	background-color: white;
+	border: solid 1px black;
+	padding: 10px 10px 5px 10px;
 
-
-@media only screen and (min-width: 550px) {
-
-	  body > header h1{
-		        //background: url("/favicon.png") no-repeat 0 8px;
-							      padding-left: 60px;
-								    }
-
-	    body > header h2 { padding-left: 60px; }
-
-		  body > footer { margin-bottom: 3em; }
 }
 
-@media only screen and (min-width: 1040px) {
-
-	  body > nav {
-		      -moz-border-radius: 0.4em;
-			      -webkit-border-radius: 0.4em;
-				      border-radius:0.4em;
-					      margin-bottom: 2em;
-						    }
-
-	    body > footer{
-			      -moz-border-radius-bottomleft: 0.4em;
-				        -moz-border-radius-bottomright: 0.4em;
-						      -webkit-border-radius: 0 0 0.4em 0.4em;
-							        border-radius: 0 0 0.4em 0.4em;
-									  }
-
-		  #main{
-			        -moz-border-radius-topleft: 0.4em;
-					      -moz-border-radius-topright: 0.4em;
-						        -webkit-border-radius: 0.4em 0.4em 0 0;
-								      border-radius: 0.4em 0.4em 0 0;
-									    }
-
-		    #content{
-				      -moz-border-radius-topleft: 0.4em;
-					        -webkit-border-radius: 0.4em 0 0 0;
-							      border-radius: 0.4em 0 0 0;
-								    }
-
-			  #content .blog-index a[rel="full-article"]{
-				        -webkit-border-radius: 6px;
-						      -moz-border-radius: 6px;
-							        border-radius: 6px;
-									  }
+div.sharing{
+	margin-bottom: 25px;
 }
+
+
+$sans: Palatino, "Palatino Linotype", Georgia， "Hiragino Sans GB", "文泉驿微米黑", "Microsoft YaHei","SimSun", sans-serif;
+$serif: "Baskerville", "文泉驿微米黑", serif;
+//$mono:"PT mono", "Courier", "文泉驿微米黑", "Microsoft YaHei", monospace;
+$heading-font-family: "Verdana", 楷体_GB2312, sans-serif;
+$header-title-font-family: "Futura", sans-serif;
