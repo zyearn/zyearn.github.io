@@ -1,0 +1,74 @@
+---
+layout: post
+title: "Hello From Mou"
+date: 2014-01-18 01:30
+comments: true
+categories: thoughts
+---
+
+两个多月没发blog了，先写一篇水文。
+
+最近换了MAC，把自己的博客拉下来以后的第一件事就是找MAC上好的markdown编辑软件，粗略survey了一下，决定用一下Mou，看了下官网介绍，界面特别简洁。由于以前写markdown一直在VIM下（虽然没有即时预览，但还是挺方便的...）。以前没有用过类似的写markdown产品，所以暂时做不了什么横向比较。
+
+下面做一些测试
+
+我是分割线：
+<!-- more -->
+---
+
+字体：
+
+# 我是H1
+## 我是H2
+### 我的H3
+#### 我是H4
+###### 我是H5
+###### 我是H6
+
+我是测试图片：
+![test image](/images/hello_from_mou/test_image.png)
+
+**我是粗体**
+
+*我是斜体*
+
+> 我是引用：
+> 
+> 业精于勤而荒于嬉，行成于思而毁于随
+
+[我是链接](http://www.lifeofzjs.com "zjs's blog")
+
+我是`inline code`
+
+    // 我是block code
+    #include <iostream>
+    
+    int main()
+    {
+        int MaxInt, MinInt;
+        MaxInt = ~(1 << 31);
+        MinInt = (1 << 31);
+        
+        std::cout << "The biggest int is " << MaxInt << std::endl;
+        std::cout << "The smallest int is " << MinInt << std::endl;
+        
+        return 0;
+    }
+    
+1. 我是有序列表
+2. 我是有序列表
+3. 我是有序列表  
+
+---
+
+* 我是无序列表
+* 我是无序列表
+* 我是无序列表  
+
+---
+   
+我是页脚引用[^1]
+
+[^1]:http://lifeofzjs.com
+
+常用的就是这些。
