@@ -3,15 +3,16 @@ layout: post
 title: "CSAPP: bomb lab"
 date: 2014-02-03 20:03
 comments: true
-categories: Computer System
+categories: 'ComputerSystem'
 ---
 
-这个lab是csapp这本书的第二个实验。输入是一个x86的binary代码，它要求我们输入6个字符串，如果输错了，就爆炸了。先对它反汇编，阅读反汇编出来的代码，然后解出代码里的6个谜题。
+这个lab是csapp这本书的第二个实验。输入是一个x86的binary代码，要求我们输入6个字符串，以满足程序的要求，达到正确执行的目的。如果输错了，程序就“爆炸”了。所以我们要做的就是根据给定的binary文件，求出这6个字符串。
+解法是先对它反汇编，根据汇编代码解出代码里的6个谜题。
 
 `objdump -d bomb`
 
 看代码其中有6个phase，一个一个解决就可以了。我把一些重要的注释都写在了代码里。
-
+<!-- more -->
 ## phase_1
 
 <pre><code>
@@ -54,7 +55,7 @@ categories: Computer System
  8048b5a:	52                   	push   %edx
  8048b5b:	e8 78 04 00 00       	call   8048fd8 &ltread_six_numbers&gt
  8048b60:	83 c4 10             	add    $0x10,%esp
-// -0x18(%ebp)存储着第一个数字，若以一定等于1，否则就error
+// -0x18(%ebp)存储着第一个数字，这个数一定等于1，否则就error
  8048b63:	83 7d e8 01          	cmpl   $0x1,-0x18(%ebp)
  8048b67:	74 05                	je     8048b6e &ltphase_2+0x26&gt
  8048b69:	e8 8e 09 00 00       	call   80494fc &ltexplode_bomb&gt
@@ -650,12 +651,12 @@ int fun7(struct treeNode* p, int v)
 }
 </code></pre>
 
-所以我们的问题等价于，找到这颗数，并且找到让fun7的返回值为7的v即可。这棵数很好找到，在`secret_phase`里调用fun7前push了2个参数，其中一个是树的root，即`0x804b320`，另一个参数是v，这个v是随附在关卡6的答案后面的。通过gdb查看`0x804b320`内存的值是：
+所以我们的问题等价于，找到这棵树，并且找到让fun7的返回值为7的v即可。这棵数很好找到，在`secret_phase`里调用fun7前push了2个参数，其中一个是树的root，即`0x804b320`，另一个参数是v，这个v是随附在关卡6的答案后面的。通过gdb查看`0x804b320`内存的值是：
 
 	0x804b320 :	0x24	0x00	0x00	0x00	0x14	0xb3	0x04	0x08
 	0x804b328 :	0x08	0xb3	0x04	0x08
 
-data，左指针，右指针都有了，所以这棵树就有了。（这棵树高度只有3，所以用笔画出来不麻烦），然后很容易得出这个v的值大于1000。别忘了`secret_phase`代码里有个限定条件是输入的v小于等于1001，所以答案为1001。
+那么data，左指针，右指针这三个值都有了，所以这棵树就有了。（这棵树高度只有3，所以用笔画出来不麻烦），然后很容易得出这个v的值大于1000。别忘了`secret_phase`代码里有个限定条件是输入的v小于等于1001，所以答案为1001。
 
 ## 答案
 
