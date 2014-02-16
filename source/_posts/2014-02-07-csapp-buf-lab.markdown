@@ -1,13 +1,13 @@
 ---
 layout: post
-title: "csapp-buf-lab"
+title: "CSAPP: Buf Lab"
 date: 2014-02-07 23:30
 comments: true
 categories: ComputerSystem
 ---
 
 这是CSAPP的buflab，非常有意思，难度又比之前的bomb-lab要小很多。程序有一个命令行选项-u要求我们输入一个唯一的userid，根据不同的userid生成不同的cookie值，这个cookie值之后在程序里一直会用到，所以每个人的答案应该都会不同。我用的userid是`zjs`。
-
+<!-- more -->
 这个lab要我们做这样一件事情，修改一个正在运行程序的stack以达到预期的目的。具体的修改方式是这样的：程序定义了一个局部C风格字符串变量，注意局部变量是放在stack上面的，所以当初始化这个字符串为用户输入，而又没有边界检查的话，就会缓冲区溢出，那么就会破坏这个函数栈。
 
 就像下面这个函数会破坏自己的函数栈：

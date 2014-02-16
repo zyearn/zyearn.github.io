@@ -6,6 +6,8 @@ comments: true
 sharing: true
 footer: true
 ---
+我是朱佳顺。
+<!--
 我是 朱佳顺，92年生，上海人
 
 有幸出生在了这个将成为人类发展转折点的时代。
@@ -20,7 +22,5 @@ footer: true
 大一大二的时候用CSDN写[blog](http://blog.csdn.net/zyearn/)，写一些技术文章，然后wordpress用了一年多，现在这个博客是octopress搭的。
 我是朱佳顺。
 
-<!--
 ![pain](/images/painOrWorkHard.png)
-<img src="/images/painOrworkHard.png" alt="Drawing" style="width: 450px;"/>
--->
+!-->
