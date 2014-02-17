@@ -3,7 +3,7 @@
 # ----------------------- #
 
 url: http://zyearn.github.io
-title: zjs's blog
+title: Keep On Programming 
 subtitle: 
 author: zyearn
 simple_search: http://google.com.hk/search
@@ -102,7 +102,7 @@ facebook_like: false
 # JiaThis
 jiathis: true
 
-
+# DuoShuo
 duoshuo_comments: true
 duoshuo_short_name: zyearn
 duoshuo_asides_num: 10      # 侧边栏评论显示条目数

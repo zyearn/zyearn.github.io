@@ -115,7 +115,7 @@ long gettag(void *addr);
 
 以下是我整个simulator的代码，通过了所有测试：
 
-{% codeblock%}
+{% codeblock lang:m %}
 /*
  * author : zjs
  * date : 2014.02.15
