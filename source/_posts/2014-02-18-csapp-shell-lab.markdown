@@ -7,9 +7,9 @@ categories: ComputerSystem
 ---
 
 这个实验要求我们写一个简单的shell，能够执行一些内置的命令和系统提供的程序，比如echo和ps，这里是详细的<a href="http://csapp.cs.cmu.edu/public/shlab.pdf" target="_blank">要求</a>。这个shell需要提供最基础的功能，前台执行程序，后台执行程序，能从terminal接受SIGINT(ctrl+c)信号和SIGTSTP(ctrl+z)信号来终止和停止程序。
-<!-- more -->
-整体框架非常清楚：从stdin读一行，如果是内置命令(比如quit，退出shell的命令)，则立刻执行，否则`fork`一个子进程，用`execve`把子进程的地址空间替换为相应的程序。还需要写3个信号处理程序，分为处理SIGCHLD, SIGINT和SIGTSTP。
 
+整体框架非常清楚：从stdin读一行，如果是内置命令(比如quit，退出shell的命令)，则立刻执行，否则`fork`一个子进程，用`execve`把子进程的地址空间替换为相应的程序。还需要写3个信号处理程序，分为处理SIGCHLD, SIGINT和SIGTSTP。
+<!-- more -->
 不要求我们写管道的功能，比如`ls | grep "abc"`，如果要写的话也比较方便，用pipe就可以实现，不过要注意每个进程需要把不用的file descriptor关闭掉。当pipe初始化然后再fork，那么父子进程的管道descripor指向的file table的`ref count`是2，如果父子进程不全都关闭，kernel不会回收这些资源。
 
 ## 需要注意的一些东西：

@@ -3,7 +3,7 @@ layout: post
 title: "Hello From Mou"
 date: 2014-01-18 01:30
 comments: true
-categories: thoughts
+categories: Thoughts
 ---
 
 两个多月没发blog了，先写一篇水文。

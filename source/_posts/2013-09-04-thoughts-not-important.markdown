@@ -3,7 +3,7 @@ layout: post
 title: "想什么重要还是做什么重要"
 date: 2013-09-04 00:10
 comments: true
-categories: thoughts
+categories: Thoughts
 ---
 前几天看了篇文章，大概观点是
 > 你想什么不重要，重要的是你做什么。

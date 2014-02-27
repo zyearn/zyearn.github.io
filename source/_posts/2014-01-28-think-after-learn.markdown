@@ -3,7 +3,7 @@ layout: post
 title: "看似努力"
 date: 2014-01-28 16:41
 comments: true
-categories: thoughts
+categories: Thoughts
 ---
 
 最近一直在思考一个问题，什么是真正的努力。

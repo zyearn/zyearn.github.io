@@ -3,7 +3,7 @@ layout: post
 title: "18岁以前就该去玩"
 date: 2013-02-14 20:56
 comments: true
-categories: thoughts
+categories: Thoughts
 ---
 
 我一直不太赞同小学生或中学生进行大量的课程教育，特别是中国式的做题教育。前些日子里看到新闻里家长们头破血流砸锅卖铁也要把自己读小学的儿子送进奥数班以防输在起跑线上，就为他们的儿子感到深深的担忧和遗憾。
