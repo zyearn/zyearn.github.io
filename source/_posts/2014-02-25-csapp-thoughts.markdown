@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "阅读CSAPP感受"
+title: "读《CSAPP》感"
 date: 2014-02-25 18:02
 comments: true
 categories: Reading
