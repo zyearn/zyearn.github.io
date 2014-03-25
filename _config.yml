@@ -100,7 +100,7 @@ google_analytics_tracking_id:
 facebook_like: false
 
 # JiaThis
-jiathis: true
+jiathis: false 
 
 # DuoShuo
 duoshuo_comments: true
