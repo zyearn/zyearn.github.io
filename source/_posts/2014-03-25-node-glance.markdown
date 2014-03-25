@@ -69,7 +69,7 @@ node adder.js
 
 在nodeJS的App Server前面一般会放个nginx做反向代理和负载平衡。
 
-但也由直接纯用nodejs的，因为nodejs的http库完整实现了HTTP1.1的全部功能，并发性能也好。
+但也可以直接纯用nodejs的，因为nodejs的http库完整实现了HTTP1.1的全部功能，并发性能也好。
 
 下面这个链接是那些用nodejs开发的项目：[https://github.com/joyent/node/wiki/Projects,-Applications,-and-Companies-Using-Node](https://github.com/joyent/node/wiki/Projects,-Applications,-and-Companies-Using-Node)
 

@@ -1,12 +1,16 @@
 ---
 layout: page
 title: "about"
-date: 2013-08-10 21:14
 comments: true
 sharing: true
 footer: true
 ---
-我是朱佳顺。
+
+我是朱佳顺。在上海交通大学念大四，CS学生。
+
+欢迎交流。
+
+email: echo emh1amlhc2h1bjIwMTBAZ21haWwuY29tCg | base64 -D
 <!--
 我是 朱佳顺，92年生，上海人
 
