@@ -1,0 +1,52 @@
+---
+layout: post
+title: "asynchronous vs nonblocking"
+date: 2014-03-29 20:13
+comments: true
+categories: ComputerSystem
+---
+
+在I/O模型中有两个概念特别容易混淆，就是同步和异步（synchronous vs nonsynchronous），阻塞和非阻塞（blocking vs nonblocking）的区别在什么地方。
+
+同步非阻塞可能吗，异步阻塞有可能吗？
+这几个概念在stevens的《UNIX网络编程（卷一）》6.2节写得很清楚，这里写个总结吧。
+<!-- more -->
+## 阻塞I/O
+
+最流行的I/O模型就是阻塞模型，如果数据没有准备好，那么程序就不会往下运行，一个例子是linux下的系统调用`read`和`write`，如果调用了read，但是file descriptor没有数据的话，就一直等待用户的输入。
+
+## 非阻塞I/O
+
+把一个file descriptor设置为非阻塞的意思就是，当数据没有准备好，进程即将睡眠的时候，不要让进程睡眠，而是返回一个错误码。在linux下的一个例子就是在`read`之前调用`fcntl`将`O_NONBLOCK`作为参数，将fd设为非阻塞的。如果read返回错误码，那么就接着read，如此反复，这种方法叫轮询，浪费cpu时间。
+
+阻塞和非阻塞比较好理解的，然后我们来看同步和异步。
+
+## 同步/异步IO
+
+POSIX这样定义同步和异步：
+> 同步I/O导致请求阻塞，直到I/O操作完成。
+
+> 异步I/O不导致进程阻塞。
+
+根据同步的定义，我们得知，只要读或写的操作，是在当前线程完成的，在一段时间里只做I/O，其它事情都不能干，那么就是同步I/O。根据异步的定义，如果我们只需要发布一个命令，让小弟（别的线程）去进行读写操作，然后读写完了告诉主线程（通过回调函数），那么就是异步I/O。
+
+简单来说，理解同步异步的关键是*谁在进行真正的I/O*, 如果是主线程，那么就是同步；如果是小弟线程，小弟线程工作完了报告主线程，那么就是异步。
+
+所以，严格意义上来说异步和非阻塞是完全两个概念。
+但在某些场景下，这两个概念是混用的：当讨论一个API返回速度的时候，异步和非阻塞都是立即返回，在这个上下文中，异步和非阻塞表示的意思相同。
+
+## 一些例子
+
+同步阻塞：read/write，select/poll（有些说法说select是异步阻塞的，但select做的仅仅是告诉你哪些fd准备读写了，然后主线程可以开始读，所以根据定义，它应该还是同步的）。
+
+同步非阻塞：read/write(O\_NONBLOCK)
+
+异步非阻塞：Linux上的AIO库
+
+## References
+
+[1] http://www.ibm.com/developerworks/cn/linux/l-async
+
+[2] 《UNIX网络编程》
+
+[3] http://www.cnblogs.com/Jerry-Chou/archive/2012/04/23/2466045.html
