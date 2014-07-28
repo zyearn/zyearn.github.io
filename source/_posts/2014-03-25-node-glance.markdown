@@ -10,13 +10,15 @@ categories: Program
 
 [官网链接](http://nodejs.org)
 
-简单来说，node.js可以让javascript运行在服务器端，javascript最早运行在浏览器中，为web页面添加交互。而node.js的出现使javascript在后台（脱离浏览器环境）运行。Node.js采用了Google V8虚拟机来解释和执行javascript代码。
+简单来说，node.js可以让javascript运行在服务器端，用js来写服务器代码逻辑。javascript最早运行在浏览器中，为web页面添加交互。而node.js的出现使javascript在后台（脱离浏览器环境）运行。Node.js采用了Google V8虚拟机来解释和执行javascript代码。
 <!-- more -->
-有了node.js，就可以不用nginx/Apache这类server软件了(不代表在生产环境中完全不用)。因为*node.js本身就是服务器*，nginx/Apache是用C写的服务器，一个server做的就是帮你做掉了TCP/IP层和HTTP协议层的解析，底层无非就是写socket监听，解析协议头协议体，然后发包含html的response。用js照样写。
+等等，心中有很多疑问？为什么有nodejs，又为什么node.js要支持js而不是python或者ruby？这要从nodejs的作者Ryan Dahl说起，在创造nodejs之前，他的兴趣是构建高性能的服务器，在不断的磨练中，他意识到高性能服务器的特点是事件驱动和异步I/O。综合比较下来，js完全符合事件驱动和异步I/O的特点；更重要的是，js有V8这个超高性能的js引擎。
+
+有了nodejs，理论上就可以不用nginx/Apache这类server软件了(不代表在生产环境中完全不用)。因为*node.js本身就是服务器*，nginx/Apache是用C写的服务器，一个server做的就是帮你做掉了TCP/IP层和HTTP协议层的解析，底层无非就是写socket监听，解析协议头协议体，然后发包含html的response。用js照样写。
 
 ## 一个例子
 
-下面一段代码是我自己写的超级简易的例子，实现了一个加法器，这个程序接受两个输入，然后返回这两个输入的和给调用者：
+下面一段代码是一个简单的例子，实现了一个加法器，这个程序接受两个输入，然后返回这两个输入的和给调用者：
 
 ```
 var http = require("http");
@@ -47,13 +49,13 @@ node adder.js
 
 *   像JAVA和PHP，每个连接都会有个新的线程，每个线程都要吃掉2MB的内存，所以即使在8GRAM的系统上，最大的并发连接也才4000。这就导致了，服务器的瓶颈在于能够处理并发的数量。
 
-    Node解决这个问题的方法是：事件驱动，非阻塞IO。所以Node非常适合处理高性能并发。
+    Node解决这个问题的方法是：事件驱动，异步IO。所以Node非常适合处理高性能并发。那是不是Node不适合cpu密集型的场景？答案是肯定的，但原因是因为在单线程的情况下，高cpu占用导致无法调度node的其它I/O任务，而不是node不善于cpu密集场景，恰恰相反，node的提供C++计算模块性能比Java和GO都高。
 
 *   Node.js不需要像传统的框架，比如Django，一板一眼地放在nginx/Apache之后，这是一个质的变化。
 
 *   js的匿名函数和闭包非常适合事件驱动和异步编程。
 
-*   前端工程师瞬间变后台...
+*   前端工程师瞬间变后台（好好体会这句话...）
 
 ## 缺点
 
@@ -78,3 +80,5 @@ node adder.js
 [1] [http://www.ibm.com/developerworks/cn/opensource/os-nodejs/](http://www.ibm.com/developerworks/cn/opensource/os-nodejs/)
 
 [2] [一个完美的入门教程](http://www.nodebeginner.org/index-zh-cn.html)
+
+[3] [node官网](http://nodejs.org)
