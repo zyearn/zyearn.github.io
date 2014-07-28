@@ -1,0 +1,142 @@
+---
+layout: post
+title: "Nagios监控工具介绍"
+date: 2014-07-11 21:59
+comments: true
+categories: Program 
+---
+
+最近在研究openstack，nagios是openstack中默认的监控工具。事实上nagio是独立于openstack存在的，只是因为它的功能和插件的强大，于是把它当作默认的监控工具。本篇文章是目的是Nagios的一个简单介绍，然后帮助读者决定要不要用Nagios来监控集群。Nagios的安装和部署请参考别的文章，文章最后引用的几个链接是非常不错的参考。
+
+## nagios 是什么
+
+Nagios是一款开源的电脑系统和网络监视工具，能有效监控Windows、Linux和Unix的主机状态，交换机路由器等网络设置，打印机等。在系统或服务状态异常时发出邮件或短信报警第一时间通知网站运维人员，在状态恢复后发出正常的邮件或短信通知。
+<!-- more -->
+## nagios 的特点
+* Popular：用得最广泛的开源监控工具
+* Fast：用C写的cgi功能，实现更快速响应和方便拓展
+* Scalable：能同时监控几千台机器，加入和删除机器方便
+* Modular：指插件的模块化，和nagios本身耦合度低
+* Cool-looking web interface，它的界面是下面这样的：
+
+![web interface](http://zyearnpic.qiniudn.com/web.png)
+
+## nagios 的主要功能
+
+* 网络服务监控（SMTP、POP3、HTTP、NNTP、ICMP、SNMP、FTP、SSH）
+* 主机资源监控（CPU load、disk usage、system logs
+* 可以指定自己编写的Plugin通过网络收集数据来监控任何情况（温度、警告……）
+* 远程监控支持SSH或SSL加通道方式进行监控
+* 能够定义网络主机的层次，允许逐级检查，就是从父主机开始向下检查
+* 当服务或主机出现问题时发出通告，可通过email, pager, sms 或任意用户自定义的plugin进行通知
+* 能够自定义事件处理机制重新激活出问题的服务或主机
+* 包括Web界面可以查看当前网络状态，通知，问题历史，日志文件等
+
+## nagios 工作原理
+
+Nagios所有的监控功能由插件（plugins）完成。Nagios周期性地调用插件来获取服务器状态。同时Nagios会维持一个队列，所有插件返回来的状态信息都进入队列，Nagios每次都从队首开始读取信息，并进行处理后，把状态结果通过web显示出。
+
+Nagios可以识别4种状态返回信息，即
+
+* 0(OK)表示状态正常/绿色
+* 1(WARNING)表示出现警告/黄色
+* 2(CRITICAL)表示出现非常严重的错误/红色
+* 3(UNKNOWN)表示未知错误/深黄色
+
+Nagios根据插件返回来的值，来判断监控对象的状态，通过web显示出来，以供管理员及时发现故障。
+
+## nagios 的插件是什么
+
+插件可以是：
+
+1. 编译好的二进制程序
+2. 脚本（perl，shell，python）
+
+必须满足以下两个条件：
+
+1. 退出时有返回码（0、1、2、3）
+2. 至少一条语句输出到stdout
+
+Nagios提供了大量的内置插件，也可以自己编写自定义插件。
+
+下面是一张Nagios一部分内置插件的截图：
+
+![plugins](http://zyearnpic.qiniudn.com/plugins.png)
+
+## Nagios运行架构图
+
+![arch](http://zyearnpic.qiniudn.com/arch.png)
+
+在上图中，橘红色方块代表的是主机；NRPE，在被监控机上运行的daemon；NSCA，在监控机上运行的daemon。nagios的主要分为主动模式和被动模式两种。
+
+### 主动模式
+
+架构图如下所示
+
+![active](http://zyearnpic.qiniudn.com/active.png)
+
+在上图种，check\_nrpe是一个二进制程序，NRPE是一个后台daemon，它们之间通过SSL连接。check\_nrpe发给NRPE一个命令，比如check\_disk，NRPE就执行这条命令对应的真实代码，这个真实代码在nrpe.cfg配置文件中定义：
+
+![nrpe.cfg](http://zyearnpic.qiniudn.com/nrpe.png)
+
+### 插件的用法
+
+可以通过`./check\_xxxx -h`查看，比如:
+
+![help](http://zyearnpic.qiniudn.com/help.png)
+
+### 自定义插件
+
+内置插件有时无法满足我们的需求，我们需要自己编写插件。插件的要求：
+
+1. 有返回值（0、1、2、3）
+2. 至少输出一行到stdout
+
+使插件工作：
+
+1. 向nrpe的配置文件中添加 `command[check\_xxxx]=/usr/local/nagios/libexec/check_xxxx.sh`
+2. 向nagios监控机的配置文件中定义服务 `define service{...}`
+3. 在MonitorServer：Service nagios restart
+4. 在MonitorClient： Service nrpe restart
+
+### 检查何时发生
+
+在`/etc/nagios/nagios.cfg`中设置：
+
+* Normal checking interval
+* Re-check interval
+* Maximum number of checks
+* Period for each check
+* Etc. 
+
+## 被动模式
+
+工作原理：被动模式则是在被监控机上面通过插件或脚本获取监控数据，然后将数据通过send\_nsca发往监控机，最后监控机通过Nsca接收并解析数据，并传递给Nagios。
+
+这样做的一个很大的优势避免了被监控机数量大时，一次轮询时间过长而导致监控反应延迟，这也是被动模式能承担更大监控量的关键。
+
+架构图：
+
+![passive](http://zyearnpic.qiniudn.com/passive.png)
+
+组成：
+
+1. Nsca （安装在MonitorServer上，用来接收并解析MonitorClient发来的监控数据，传递给nagios）
+2. Send\_nsca（安装在MonitorClient上，用来发送监控数据。）
+
+需要用`crontab`使 MonitorClient 定时运行插件脚本。
+
+## 警报功能
+
+若某个监控项是 CRITICAL 状态，则会发邮件给管理员。在contact配置中增加管理员邮箱。
+
+## Some REFs
+
+* http://nagios.org
+* http://nagiosbook.org/
+* http://www.cnblogs.com/mchina/archive/2013/02/20/2883404.html
+* http://www.cszhi.com/20120527/nagios-nsca.html
+* http://nagios.sourceforge.net/docs/3\_0/toc.html
+* https://nagios-plugins.org/doc/guidelines.html
+* https://nsrc.org/workshops/2009/pacnog5/track1/presos/nagios/nagios.ppt
+
