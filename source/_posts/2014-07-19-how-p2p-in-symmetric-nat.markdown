@@ -9,7 +9,7 @@ categories: Program
 最近在研究NAT穿越实现p2p技术，这个技术有很多广泛的应用，比如大家最熟悉的qq是怎么实现点对点传输文本的？A在一个局域网里，B在一个局域网里，他们怎么实现通信？这当中有什么困难？除了qq，一般的IM软件都有遇到这个问题，比如skype和facetime。一些下载软件也运用了p2p技术，就是边下载边上传文件块给那些没有这块文件的人，这个技术也要涉及NAT穿越。
 
 详细说之前，我们先说说背景知识。
-<!-- more -- >
+<!-- more -->
 ## 背景知识之一：什么是NAT
 
 NAT（Network Address Translation）是将IP 数据包头中的IP 地址转换为另一个IP 地址的过程，通俗来讲，就是局域网，公用一个public IP。那为什么要有这个东西，NAT是用来解决什么问题的？
@@ -80,7 +80,7 @@ IP、端口都受限。返回的数据只接受曾经打洞成功的对象（A:P
 2. 防火墙是否设置
 3. 是否在NAT之后以及NAT的类型
 
-![STUN](http://zyearnpic.qiniudn.com/STUN.png)
+<img src="http://zyearnpic.qiniudn.com/STUN.png" alt="turn" width="280" height="360">
 
 ## 穿透(打洞)策略
 
@@ -92,7 +92,7 @@ IP、端口都受限。返回的数据只接受曾经打洞成功的对象（A:P
 2. A、B连接一个公网服务器（turn server，RFC5766），把自己的NAT发给turn server，此时turn server发现A和B想要互连，把对方的ip，port，NAT类型发给对方
 3. Client根据自身NAT类型做出相应的策略。
 
-![turn](http://zyearnpic.qiniudn.com/turn.png)
+<img src="http://zyearnpic.qiniudn.com/turn.png" alt="stun" width="280" height="360">
 
 ### If {有一方对称NAT}
 
