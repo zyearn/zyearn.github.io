@@ -2,17 +2,17 @@
 // To give it a try, uncomment some of the lines below rebuild your blog, and see how it works. your sites's.
 // If you love to use Web Fonts, you also need to add some lines to source/_includes/custom/head.html
 
-//$sans: "Delius", sans-serif;    // 正文字体
-//$serif: "Delius", serif;        // 正文字体
-$sans: "Open Sans'", sans-serif;    // 正文字体
-$serif: "Open Sans'", serif;        // 正文字体
+$sans: "Delius", sans-serif;    // 正文字体
+$serif: "Delius", serif;        // 正文字体
+//$sans: "Open Sans'", sans-serif;    // 正文字体
+//$serif: "Open Sans'", serif;        // 正文字体
 
 //$mono: "Courier", monospace;
 
-//$heading-font-family: "Delius", sans-serif;     // 文章标题
-$heading-font-family: 'Open Sans', sans-serif;     // 文章标题
+$heading-font-family: "Delius", sans-serif;     // 文章标题
+//$heading-font-family: 'Open Sans', sans-serif;     // 文章标题
 
-//$header-title-font-family: "Delius", cursive, Helvetica, Arial, sans-serif;
-$header-title-font-family: 'Frijole', cursive;  // 博客标题
+$header-title-font-family: "Delius", cursive, Helvetica, Arial, sans-serif;
+//$header-title-font-family: 'Frijole', cursive;  // 博客标题
 
 //$header-subtitle-font-family: "Futura", sans-serif;   // 博客子标题
