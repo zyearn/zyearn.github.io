@@ -6,7 +6,7 @@ comments: true
 categories: Program
 ---
 
-最近和一位大神同学做了一个网站外包项目，现在终于结束了，现在稍微总结一下。后台是用nodejs的express写的（话说express的作者认为express不好，然后又去发起了一个新的开源框架叫koa），对用node做web开发也有了一个地图式的了解。
+最近和一位大神同学做了一个网站外包项目，最近结束了，现在稍微总结一下。后台是用nodejs的express写的（话说express的作者认为express不好，然后又去发起了一个新的开源框架叫koa），对用node做web开发也有了一个地图式的了解。
 
 ### 哪一层解决问题很重要。
 <!-- more -->
