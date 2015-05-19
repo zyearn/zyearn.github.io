@@ -6,8 +6,8 @@ comments: true
 categories: Program
 ---
 
-最近两个月的业余时间在写一个私人项目，目的是在Linux下写一个高性能Web服务器，名字叫Zaver。主体框架和基本功能已完成，还有一些高级功能日后慢慢增加，代码放在了<a href="https://github.com/zyearn/zaver" target="_blank">github</a>。Zaver的框架将尽我所能在代码量尽量少的情况下接近工业水平，而不像一些教科书上的toy server为了教原理而舍弃了很多原本server应该有的东西。
-在本篇文章中，我将一步步地阐明Zaver的设计方案和开发过程中遇到遇到的困难以及相应的解决方法。
+最近两个月的业余时间在写一个私人项目，目的是在Linux下写一个高性能Web服务器，名字叫Zaver。主体框架和基本功能已完成，还有一些高级功能日后会逐渐增加，代码放在了<a href="https://github.com/zyearn/zaver" target="_blank">github</a>。Zaver的框架会在代码量尽量少的情况下接近工业水平，而不像一些教科书上的toy server为了教原理而舍弃了很多原本server应该有的东西。
+在本篇文章中，我将一步步地阐明Zaver的设计方案和开发过程中遇到的困难以及相应的解决方法。
 <!-- more -->
 
 ## 为什么要重复造轮子
@@ -23,16 +23,78 @@ categories: Program
 ## 教科书上的server
 
 学网络编程，第一个例子可能会是Tcp echo服务器。
-大概思路是server会listen在某个端口，调用accept等待客户的connect，等客户连接上时会返回一个fd(file descriptor)，从fd里read，之后write同样的数据到这个fd，然后重新accept，在网上找到一个非常好的代码实现，链接点<a href="http://www.paulgriffiths.net/program/c/srcs/echoservsrc.html" target="_blank">这里</a>。
-如果你还不太懂这个程序，可以把它下载到本地编译运行一下，用telnet测试，你会发现在telnet里输入什么，马上就会显示什么。
-如果你之前还没有接触过网络编程，可能会突然领悟到，这和浏览器访问某个网址然后信息显示在屏幕上，整个原理是一模一样的！
+大概思路是server会listen在某个端口，调用accept等待客户的connect，等客户连接上时会返回一个fd(file descriptor)，从fd里read，之后write同样的数据到这个fd，然后重新accept，在网上找到一个非常好的代码实现，核心代码是这样的：
+
+```
+while ( 1 ) {
+
+    /*  Wait for a connection, then accept() it  */
+
+    if ( (conn_s = accept(list_s, NULL, NULL) ) < 0 ) {
+        fprintf(stderr, "ECHOSERV: Error calling accept()\n");
+        exit(EXIT_FAILURE);
+    }
+
+
+    /*  Retrieve an input line from the connected socket
+        then simply write it back to the same socket.     */
+
+    Readline(conn_s, buffer, MAX_LINE-1);
+    Writeline(conn_s, buffer, strlen(buffer));
+
+
+    /*  Close the connected socket  */
+
+    if ( close(conn_s) < 0 ) {
+        fprintf(stderr, "ECHOSERV: Error calling close()\n");
+        exit(EXIT_FAILURE);
+    }
+}
+```
+
+完整实现在<a href="http://www.paulgriffiths.net/program/c/srcs/echoservsrc.html" target="_blank">这里</a>。如果你还不太懂这个程序，可以把它下载到本地编译运行一下，用telnet测试，你会发现在telnet里输入什么，马上就会显示什么。如果你之前还没有接触过网络编程，可能会突然领悟到，这和浏览器访问某个网址然后信息显示在屏幕上，整个原理是一模一样的！
 学会了这个echo服务器是如何工作的以后，在此基础上拓展成一个web server非常简单，因为HTTP是建立在TCP之上的，无非多一些协议的解析。client在建立TCP连接之后发的是HTTP协议头和（可选的）数据，server接受到数据后先解析HTTP协议头，根据协议头里的信息发回相应的数据，浏览器把信息展现给用户,一次请求就完成了。
 
-这个方法是一些书籍教网络编程的标准例程，比如《深入理解计算机系统》（CSAPP）在讲网络编程的时候就用这个思路实现了一个最简单的server，代码实现在<a href="http://csapp.cs.cmu.edu/public/ics2/code/netp/tiny/tiny.c" target="_blank">这里</a>，非常短，值得一读，特别是这个server即实现了静态内容又实现了动态内容，虽然效率不高，但已达到教学的目的。之后这本书用事件驱动优化了这个server，关于事件驱动会在后面讲。
+这个方法是一些书籍教网络编程的标准例程，比如《深入理解计算机系统》（CSAPP）在讲网络编程的时候就用这个思路实现了一个最简单的server，代码结构和上面的echo服务器代码类似，完整实现在<a href="http://csapp.cs.cmu.edu/public/ics2/code/netp/tiny/tiny.c" target="_blank">这里</a>，非常短，值得一读，特别是这个server即实现了静态内容又实现了动态内容，虽然效率不高，但已达到教学的目的。之后这本书用事件驱动优化了这个server，关于事件驱动会在后面讲。
 
 虽然这个程序能正常工作，但它完全不能投入到工业使用，原因是server在处理一个客户请求的时候无法接受别的客户，也就是说，这个程序无法同时满足两个想得到echo服务的用户，这是无法容忍的，试想一下你在用微信，然后告诉你有人在用，你必须等那个人走了以后才能用。
 
-然后一个改进的解决方案被提出来了：accept以后fork，父进程继续accept，子进程来处理这个fd。这个也是一些教材上的标准示例，示例代码在<a href="http://www.martinbroadhurst.com/source/forked-server.c.html" target="_blank">这里</a>。表面上，这个程序解决了前面只能处理单客户的问题，但基于以下几点主要原因，还是无法投入工业的高并发使用。
+然后一个改进的解决方案被提出来了：accept以后fork，父进程继续accept，子进程来处理这个fd。这个也是一些教材上的标准示例，代码大概长这样：
+
+```
+/* Main loop */
+    while (1) {
+        struct sockaddr_in their_addr;
+        size_t size = sizeof(struct sockaddr_in);
+        int newsock = accept(listenfd, (struct sockaddr*)&their_addr, &size);
+        int pid;
+
+        if (newsock == -1) {
+            perror("accept");
+            return 0;
+        }
+
+        pid = fork();
+        if (pid == 0) {
+            /* In child process */
+            close(listenfd);
+            handle(newsock);
+            return 0;
+        }
+        else {
+            /* Parent process */
+            if (pid == -1) {
+                perror("fork");
+                return 1;
+            }
+            else {
+                close(newsock);
+            }
+        }
+    }
+```
+
+完整代码在<a href="http://www.martinbroadhurst.com/source/forked-server.c.html" target="_blank">这里</a>。表面上，这个程序解决了前面只能处理单客户的问题，但基于以下几点主要原因，还是无法投入工业的高并发使用。
 
 * 每次来一个连接都fork，开销太大。任何讲Operating System的书都会写，线程可以理解为轻量级的进程，那进程到底重在什么地方？《Linux Kernel Development》有一节（<a href="http://www.makelinux.net/books/lkd2/ch03lev1sec2" target="_blank">Chapter3</a>）专门讲了调用fork时，系统具体做了什么。地址空间是copy on write的，所以不造成overhead。但是其中有一个复制父进程页表的操作，这也是为什么在Linux下创建进程比创建线程开销大的原因，而所有线程都共享一个页表（关于为什么地址空间是COW但页表不是COW的原因，可以思考一下）。
 <!-- 
@@ -42,25 +104,25 @@ http://stackoverflow.com/questions/16724641/the-only-overhead-incurred-by-fork-i
 
 * 进程调度器压力太大。当并发量上来了，系统里有成千上万进程，相当多的时间将花在决定哪个进程是下一个运行进程以及上下文切换，这是非常不值得的。
 
-* 在heavy load下多个进程消耗太多的内存，在进程下，每一个连接都对应一个独立的地址空间；即使在线程下，每一个连接也会占用独立的线程栈。
+* 在heavy load下多个进程消耗太多的内存，在进程下，每一个连接都对应一个独立的地址空间；即使在线程下，每一个连接也会占用独立。此外父子进程之间需要发生IPC，高并发下IPC带来的overhead不可忽略。
 
 换用线程虽然能解决fork开销的问题，但是调度器和内存的问题还是无法解决。所以进程和线程在本质上是一样的，被称为process-per-connection model。因为无法处理高并发而不被业界使用。
 
-一个非常显而易见的改进是用线程池，线程数量固定，就没上面提到的问题了。基本架构是有一个loop用来accept连接，之后把这个连接分配给线程池中的某个线程，处理完了以后这个线程又可以处理别的连接。看起来是个非常好的方案，但在实际情况中，很多连接都是长连接（在一个TCP连接上进行多次通信），一个线程在收到任务以后，阻塞read，天知道对方什么时候发来新的数据，于是这个线程就被这个read给阻塞住了，什么都不能干，假设有n个线程，第(n+1)个长连接来了，还是无法处理。
+一个非常显而易见的改进是用线程池，线程数量固定，就没上面提到的问题了。基本架构是有一个loop用来accept连接，之后把这个连接分配给线程池中的某个线程，处理完了以后这个线程又可以处理别的连接。看起来是个非常好的方案，但在实际情况中，很多连接都是长连接（在一个TCP连接上进行多次通信），一个线程在收到任务以后，处理完第一批来的数据，此时会再次调用read，天知道对方什么时候发来新的数据，于是这个线程就被这个read给阻塞住了（因为默认情况下fd是blocking的，即如果这个fd上没有数据，调用read会阻塞住进程），什么都不能干，假设有n个线程，第(n+1)个长连接来了，还是无法处理。
 
 怎么办？我们发现问题是出在read阻塞住了线程，所以解决方案是把blocking I/O换成non-blocking I/O，这时候read的做法是如果有数据则返回数据，如果没有可读数据就返回-1并把errno设置为EAGAIN，表明下次有数据了我再来继续读(man 2 read)。
 
 这里有个问题，进程怎么知道这个fd什么时候来数据又可以读了？这里要引出一个关键的概念，事件驱动/事件循环。
 
-## 事件驱动
+## 事件驱动(Event-driven)
 
-如果有这么一个函数，在某个fd可以读的时候告诉我，上面的问题不就解决了？解决方案叫做事件驱动，在linux下可以用select/poll/epoll这些I/O复用的函数来实现，因为我要不断知道哪些fd是可读的，所以要把这个函数放到一个loop里，这个就叫事件循环（event loop）。一个示例代码如下（摘自陈硕的《Linux多线程服务端编程》）：
+如果有这么一个函数，在某个fd可以读的时候告诉我，而不是反复地去调用read，上面的问题不就解决了？这种方式叫做事件驱动，在linux下可以用select/poll/epoll这些I/O复用的函数来实现（man 7 epoll），因为要不断知道哪些fd是可读的，所以要把这个函数放到一个loop里，这个就叫事件循环（event loop）。示例代码如下：
 
 ```
 while (!done)
 {
   int timeout_ms = max(1000, getNextTimedCallback());
-  int retval = ::poll(fds, nfds, timeout_ms);
+  int retval = epoll_wait(epds, events, maxevents, timeout_ms);
 
   if (retval < 0) {
      处理错误
@@ -74,14 +136,17 @@ while (!done)
 }
 ```
 
-这里需要注明的是，select/poll不具备伸缩性，复杂度是O(n)，而epoll的复杂度是O(1)，在Linux下工业程序都是用epoll（其它平台有各自的API，比如在Freebsd/MacOS下用kqueue）来通知进程哪些fd发生了事件，至于为什么epoll比前两者效率高，请参考<a href="http://stackoverflow.com/questions/17355593/why-is-epoll-faster-than-select" target="_blank">这里</a>。
+在这个while里，调用`epoll_wait`会将进程阻塞住，直到在epoll里的fd发生了当时注册的事件。
+<a href="https://banu.com/blog/2/how-to-use-epoll-a-complete-example-in-c/" target="_blank">这里</a>有个非常好的例子来展示epoll是怎么用的。
+需要注明的是，select/poll不具备伸缩性，复杂度是O(n)，而epoll的复杂度是O(1)，在Linux下工业程序都是用epoll（其它平台有各自的API，比如在Freebsd/MacOS下用kqueue）来通知进程哪些fd发生了事件，至于为什么epoll比前两者效率高，请参考<a href="http://stackoverflow.com/questions/17355593/why-is-epoll-faster-than-select" target="_blank">这里</a>。
+
+事件驱动是实现高性能服务器的关键，像Nginx，lighttpd，Tornado，NodeJs都是基于事件驱动实现的。
 
 ## Zaver
 
-结合上面的讨论，我们得出了一个事件循环+ non-blocking I/O + 线程池的解决方案，这也是Zaver的主题架构（事件循环+non-blocking I/O又被称为Reactor模型）。
-事件循环用作事件通知，如果listenfd上可读，则调用accept，把新建的fd加入epoll中；是普通的连接fd，将其加入到一个生产者-消费者队列里面。
-线程池用来做计算，从一个生产者-消费者队列里读可读的fd作为计算任务，直到读到EAGAIN为止，等待事件循环对这个fd读写事件的下一次通知。
-
+结合上面的讨论，我们得出了一个事件循环+ non-blocking I/O + 线程池的解决方案，这也是Zaver的主题架构（同步的事件循环+non-blocking I/O又被称为<a href="http://en.wikipedia.org/wiki/Reactor_pattern" target="_blank">Reactor</a>模型）。
+事件循环用作事件通知，如果listenfd上可读，则调用accept，把新建的fd加入epoll中；是普通的连接fd，将其加入到一个生产者-消费者队列里面，等工作线程来拿。
+线程池用来做计算，从一个生产者-消费者队列里拿一个fd作为计算输入，直到读到EAGAIN为止，保存现在的处理状态（状态机），等待事件循环对这个fd读写事件的下一次通知。
 
 ## 开发中遇到的问题
 
@@ -92,13 +157,13 @@ Zaver的运行架构在上文介绍完毕，下面将总结一下我在开发时
 
 答：这里涉及到了epoll的两种工作模式，一种叫边缘触发（Edge Triggered），另一种叫水平触发（Level Triggered）。ET和LT的命名是非常形象的，ET是表示在状态改变时才通知（eg，在边缘上从低电平到高电平），而LT表示在这个状态才通知（eg，只要处于低电平就通知），对应的，在epoll里，ET表示只要有新数据了就通知（状态的改变）和“只要有新数据”就一直会通知。
 
-举个具体的例子：如果某fd上有2kb的数据，应用程序只读了1kb，ET就不会在下一次epoll_wait的时候返回，读完以后又有新数据才返回。而LT每次都会返回这个fd，只要这个fd有数据可读。所以在Zaver里我们需要用epoll的ET，用法的模式是固定的，把fd设为nonblocking，如果返回某fd可读，循环read直到EAGAIN（如果read返回0，则远端关闭了连接）。
+举个具体的例子：如果某fd上有2kb的数据，应用程序只读了1kb，ET就不会在下一次`epoll_wait`的时候返回，读完以后又有新数据才返回。而LT每次都会返回这个fd，只要这个fd有数据可读。所以在Zaver里我们需要用epoll的ET，用法的模式是固定的，把fd设为nonblocking，如果返回某fd可读，循环read直到EAGAIN（如果read返回0，则远端关闭了连接）。
 
 * 当server和浏览器保持着一个长连接的时候，浏览器突然被关闭了，那么server端怎么处理这个socket？
 
 答：此时该fd在事件循环里会返回一个可读事件，然后就被分配给了某个线程，该线程read会返回0，代表对方已关闭这个fd，于是server端也调用close即可。
 
-* 既然把socket的fd设置为non-blocking，那么如果有一些数据包晚到了，这时候read就会返回-1，errno设置为EAGAIN，等待下次读取，这是就遇到了一个阻塞read不曾遇到的问题，我们必须将已读到的数据保存下来，并维护一个状态，以表示是否还需要数据，比如读到HTTP Request Header, `GET /index.html HTT`就结束了，那么我们必须维护这个状态，下一次必须读到'P'，否则HTTP协议解析错误。
+* 既然把socket的fd设置为non-blocking，那么如果有一些数据包晚到了，这时候read就会返回-1，errno设置为EAGAIN，等待下次读取。这是就遇到了一个blocking read不曾遇到的问题，我们必须将已读到的数据保存下来，并维护一个状态，以表示是否还需要数据，比如读到HTTP Request Header, `GET /index.html HTT`就结束了，在blocking I/O里只要继续read就可以，但在nonblocking I/O，我们必须维护这个状态，下一次必须读到'P'，否则HTTP协议解析错误。
 
 答：解决方案是维护一个状态机，在解析Request Header的时候对应一个状态机，解析Header Body的时候也维护一个状态机，Zaver状态机的时候参考了Nginx在解析header时的实现，我做了一些精简和设计上的改动。
 
@@ -121,7 +186,7 @@ zv_http_header_handle_t zv_http_headers_in[] = {
 
 * 压力测试
 
-答：这个有很多成熟的方案了，比如http_load, webbench, ab等等。我最终选择了<a href="http://home.tiscali.cz/~cz210552/webbench.html" target="_blank">webbench</a>，理由是简单，用fork来模拟client，代码只有几百行，出问题可以马上根据webbench源码定位到底是哪个操作使Server挂了。
+答：这个有很多成熟的方案了，比如http_load, webbench, ab等等。我最终选择了<a href="http://home.tiscali.cz/~cz210552/webbench.html" target="_blank">webbench</a>，理由是简单，用fork来模拟client，代码只有几百行，出问题可以马上根据webbench源码定位到底是哪个操作使Server挂了。另外因为后面提到的一个问题，我仔细看了下Webbench的源码，并且非常推荐C初学者看一看，只有几百行，但是涉及了命令行参数解析、fork子进程、父子进程用pipe通信、信号handler的注册、构建HTTP协议头的技巧等一些编程上的技巧。
 
 * 用Webbech测试，Server在测试结束时挂了
 
@@ -151,7 +216,7 @@ zv_http_header_handle_t zv_http_headers_in[] = {
 Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。另外，Zaver提供了配置文件和命令行参数解析，以及完善的Makefile和源代码结构，也可以帮助任何一个C初学者入门一个项目是怎么构建的。
 目前我的<a href="http://wiki.lifeofzjs.com/" target="_blank">wiki</a>就用Zaver托管着。
 
-## 参考
+## 参考资料
 
 [1] https://github.com/zyearn/zaver <br>
 [2] http://nginx.org/en/ <br>
