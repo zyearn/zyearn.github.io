@@ -102,7 +102,7 @@ http://www.quora.com/While-forking-a-process-why-does-Linux-kernel-copy-the-cont
 http://stackoverflow.com/questions/16724641/the-only-overhead-incurred-by-fork-is-page-table-duplication-and-process-id-crea 
 -->
 
-* 进程调度器压力太大。当并发量上来了，系统里有成千上万进程，相当多的时间将花在决定哪个进程是下一个运行进程以及上下文切换，这是非常不值得的。
+* 进程调度器压力太大。当并发量上来了，系统里有成千上万进程，相当多的时间将花在决定哪个进程是下一个运行进程以及上下文切换，开销非常大，具体的分析请看[《A Design Framework for Highly Concurrent Systems》](http://www.cs.berkeley.edu/~culler/papers/events.pdf)。
 
 * 在heavy load下多个进程消耗太多的内存，在进程下，每一个连接都对应一个独立的地址空间；即使在线程下，每一个连接也会占用独立。此外父子进程之间需要发生IPC，高并发下IPC带来的overhead不可忽略。
 
@@ -186,7 +186,7 @@ zv_http_header_handle_t zv_http_headers_in[] = {
 
 * 压力测试
 
-答：这个有很多成熟的方案了，比如http_load, webbench, ab等等。我最终选择了<a href="http://home.tiscali.cz/~cz210552/webbench.html" target="_blank">webbench</a>，理由是简单，用fork来模拟client，代码只有几百行，出问题可以马上根据webbench源码定位到底是哪个操作使Server挂了。另外因为后面提到的一个问题，我仔细看了下Webbench的源码，并且非常推荐C初学者看一看，只有几百行，但是涉及了命令行参数解析、fork子进程、父子进程用pipe通信、信号handler的注册、构建HTTP协议头的技巧等一些编程上的技巧。
+答：压力测试为了测量网站对高并发的承受程度，在哪个并发度会使网站挂掉。这个有很多成熟的方案了，比如http_load, webbench, ab等等。我最终选择了<a href="http://home.tiscali.cz/~cz210552/webbench.html" target="_blank">webbench</a>，理由是简单，用fork来模拟client，代码只有几百行，出问题可以马上根据webbench源码定位到底是哪个操作使Server挂了。另外因为后面提到的一个问题，我仔细看了下Webbench的源码，并且非常推荐C初学者看一看，只有几百行，但是涉及了命令行参数解析、fork子进程、父子进程用pipe通信、信号handler的注册、构建HTTP协议头的技巧等一些编程上的技巧。
 
 * 用Webbech测试，Server在测试结束时挂了
 
@@ -200,13 +200,9 @@ zv_http_header_handle_t zv_http_headers_in[] = {
 目前Zaver还有很多改进的地方，比如：
 
 * 现在新分配内存都是通过malloc的方式，之后会改成内存池的方式
-
 * 还不支持动态内容，后期开始考虑增加php的支持
-
 * HTTP/1.1较复杂，目前只实现了几个主要的（keep-alive, browser cache）的header解析
-
 * 不活动连接的超时过期还没有做
-
 * ...
 
 ## 总结
