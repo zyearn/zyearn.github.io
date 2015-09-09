@@ -12,11 +12,11 @@ footer: true
 
 喜欢高并发和服务器端开发，略懂前端。
 
-github: <a href="https://github.com/zyearn" target="_blank">https://github.com/zyearn</a>
+github: https://github.com/zyearn
 
-zhihu: <a href="http://www.zhihu.com/people/zhu-js" target="_blank">http://www.zhihu.com/people/zhu-js</a>
+zhihu: http://www.zhihu.com/people/zhu-js
 
-douban: <a href="http://www.douban.com/people/48726017/" target="_blank">http://www.douban.com/people/48726017/</a> 
+douban: http://www.douban.com/people/48726017/
 
 邮箱：echo emh1amlhc2h1bjIwMTBAZ21haWwuY29tCg | base64 -D
 
