@@ -91,7 +91,7 @@ categories: Program
 
 ## 感想
 
-* 队友很重要，两个小伙伴很给力
+* 队友很重要，两个小伙伴很给力（[乐群](https://abcdabcd987.com/)和[骆神](http://www.zhihu.com/people/lz1996)）
 * GO好简洁，很好用
 * 做系统考虑好TradeOff很重要
 * redis好强大，单线程事件驱动网络I/O的典范
