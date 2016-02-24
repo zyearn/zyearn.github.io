@@ -1,12 +1,10 @@
 ---
 layout: post
-title: "当我们谈优化，到底在谈什么"
+title: "参加饿了么编程马拉松感"
 date: 2015-12-02 14:30
 comments: true
 categories: Program
 ---
-
-副标题：参加饿了么编程马拉松感
 
 饿了么在今年十一月的时候举办了一个黑客马拉松，官方主页在[这里](http://hackathon.ele.me/)，看了简介以后我认为有两点比较吸引人。
 
