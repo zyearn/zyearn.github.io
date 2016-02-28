@@ -25,7 +25,7 @@ categories: Program
 学网络编程，第一个例子可能会是Tcp echo服务器。
 大概思路是server会listen在某个端口，调用accept等待客户的connect，等客户连接上时会返回一个fd(file descriptor)，从fd里read，之后write同样的数据到这个fd，然后重新accept，在网上找到一个非常好的代码实现，核心代码是这样的：
 
-```
+{% codeblock lang:c %}
 while ( 1 ) {
 
     /*  Wait for a connection, then accept() it  */
@@ -50,7 +50,7 @@ while ( 1 ) {
         exit(EXIT_FAILURE);
     }
 }
-```
+{% endcodeblock%}
 
 完整实现在<a href="http://www.paulgriffiths.net/program/c/srcs/echoservsrc.html" target="_blank">这里</a>。如果你还不太懂这个程序，可以把它下载到本地编译运行一下，用telnet测试，你会发现在telnet里输入什么，马上就会显示什么。如果你之前还没有接触过网络编程，可能会突然领悟到，这和浏览器访问某个网址然后信息显示在屏幕上，整个原理是一模一样的！
 学会了这个echo服务器是如何工作的以后，在此基础上拓展成一个web server非常简单，因为HTTP是建立在TCP之上的，无非多一些协议的解析。client在建立TCP连接之后发的是HTTP协议头和（可选的）数据，server接受到数据后先解析HTTP协议头，根据协议头里的信息发回相应的数据，浏览器把信息展现给用户,一次请求就完成了。
@@ -61,7 +61,7 @@ while ( 1 ) {
 
 然后一个改进的解决方案被提出来了：accept以后fork，父进程继续accept，子进程来处理这个fd。这个也是一些教材上的标准示例，代码大概长这样：
 
-```
+{% codeblock lang:c %}
 /* Main loop */
     while (1) {
         struct sockaddr_in their_addr;
@@ -92,7 +92,7 @@ while ( 1 ) {
             }
         }
     }
-```
+{% endcodeblock%}
 
 完整代码在<a href="http://www.martinbroadhurst.com/source/forked-server.c.html" target="_blank">这里</a>。表面上，这个程序解决了前面只能处理单客户的问题，但基于以下几点主要原因，还是无法投入工业的高并发使用。
 
@@ -118,14 +118,14 @@ http://stackoverflow.com/questions/16724641/the-only-overhead-incurred-by-fork-i
 
 如果有这么一个函数，在某个fd可以读的时候告诉我，而不是反复地去调用read，上面的问题不就解决了？这种方式叫做事件驱动，在linux下可以用select/poll/epoll这些I/O复用的函数来实现（man 7 epoll），因为要不断知道哪些fd是可读的，所以要把这个函数放到一个loop里，这个就叫事件循环（event loop）。示例代码如下：
 
-```
+{% codeblock lang:c %}
 while (!done)
 {
   int timeout_ms = max(1000, getNextTimedCallback());
   int retval = epoll_wait(epds, events, maxevents, timeout_ms);
 
   if (retval < 0) {
-     处理错误
+    处理错误
   } else {
     处理到期的 timers
 
@@ -134,7 +134,7 @@ while (!done)
     }
   }
 }
-```
+{% endcodeblock%}
 
 在这个while里，调用`epoll_wait`会将进程阻塞住，直到在epoll里的fd发生了当时注册的事件。
 <a href="https://banu.com/blog/2/how-to-use-epoll-a-complete-example-in-c/" target="_blank">这里</a>有个非常好的例子来展示epoll是怎么用的。
@@ -171,7 +171,7 @@ Zaver的运行架构在上文介绍完毕，下面将总结一下我在开发时
 
 答：HTTP header有很多，必然有很多个解析函数，比如解析`If-modified-since`头和解析`Connection`头是分别调用两个不同的函数，所以这里的设计必须是一种模块化的、易拓展的设计，可以使开发者很容易地修改和定义针对不同header的解析。Zaver的实现方式参考了Nginx的做法，定义了一个struct数组，其中每一个struct存的是key，和对应的函数指针hock，如果解析到的headerKey == key，就调hock。定义代码如下
 
-```
+{% codeblock lang:c %}
 zv_http_header_handle_t zv_http_headers_in[] = {
     {"Host", zv_http_process_ignore},
     {"Connection", zv_http_process_connection},
@@ -179,7 +179,8 @@ zv_http_header_handle_t zv_http_headers_in[] = {
     ...
     {"", zv_http_process_ignore}
 };
-```
+{% endcodeblock%}
+
 * 怎样存储header
 
 答：Zaver将所有header用链表连接了起来，链表的实现参考了Linux内核的双链表实现（list_head），它提供了一种通用的双链表数据结构，代码非常值得一读，我做了简化和改动，代码在<a href="https://github.com/zyearn/zaver/blob/master/src/list.h" target="_blank">这里</a>。
