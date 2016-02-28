@@ -6,11 +6,11 @@ comments: true
 categories: Program
 ---
 
-这篇博客的目的是向大家推荐一门课：MIT的[6.828](https://pdos.csail.mit.edu/6.828/2014/index.html)。
+这篇博文的目的是向大家推荐一门课：MIT的[6.828](https://pdos.csail.mit.edu/6.828/2014/index.html)。
 
 这门课主要讲的是操作系统原理与实践，具体分三个部分：lectures，labs and readings。
-Lectures部分会介绍通过xv6来阐述OS原理，并解读xv6源码；
-Labs部分是这门课的实践部分，写代码完成一个OS；
+Lectures部分会通过介绍xv6来阐述OS原理，并解读xv6源码；
+Labs是这门课的实践部分，课程会提供一个OS的框架，但核心部分全部都是缺失的，需要学生来填写核心代码来实现这个OS；
 Readings部分会阅读一些paper来了解一些更深入、更有意思的topic。
 
 <!-- more -->
