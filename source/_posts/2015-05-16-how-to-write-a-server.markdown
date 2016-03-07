@@ -211,7 +211,6 @@ zv_http_header_handle_t zv_http_headers_in[] = {
 本文介绍了Zaver，一个结构简单，支持高并发的http服务器。
 基本架构是事件循环 + non-blocking I/O + 线程池。
 Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。另外，Zaver提供了配置文件和命令行参数解析，以及完善的Makefile和源代码结构，也可以帮助任何一个C初学者入门一个项目是怎么构建的。
-目前我的<a href="http://wiki.lifeofzjs.com/" target="_blank">wiki</a>就用Zaver托管着。
 
 ## 参考资料
 
