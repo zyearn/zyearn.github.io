@@ -3,7 +3,7 @@ layout: post
 title: "理解Javascript中的继承"
 date: 2015-02-08 12:30
 comments: true
-categories: Javascript
+categories: Program
 ---
 
 在学习Javascript的过程中，哪个部分最隐涩难懂？就我个人而言，是基于原型链的继承机制。它和普通的OO语言如C++、Java中的继承在语法上相似，但内部实现则不同。Javascript里没有“类”的概念，熟悉C++、Java的同学要问了，没有类的话那哪来的继承呢？需要理解Javascript中的继承。首先得理解原型链。
