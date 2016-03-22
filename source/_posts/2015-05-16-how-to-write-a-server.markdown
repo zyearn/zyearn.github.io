@@ -157,11 +157,19 @@ Zaver的运行架构在上文介绍完毕，下面将总结一下我在开发时
 
 答：这里涉及到了epoll的两种工作模式，一种叫边缘触发（Edge Triggered），另一种叫水平触发（Level Triggered）。ET和LT的命名是非常形象的，ET是表示在状态改变时才通知（eg，在边缘上从低电平到高电平），而LT表示在这个状态才通知（eg，只要处于低电平就通知），对应的，在epoll里，ET表示只要有新数据了就通知（状态的改变）和“只要有新数据”就一直会通知。
 
-举个具体的例子：如果某fd上有2kb的数据，应用程序只读了1kb，ET就不会在下一次`epoll_wait`的时候返回，读完以后又有新数据才返回。而LT每次都会返回这个fd，只要这个fd有数据可读。所以在Zaver里我们需要用epoll的ET，用法的模式是固定的，把fd设为nonblocking，如果返回某fd可读，循环read直到EAGAIN（如果read返回0，则远端关闭了连接）。
+举个具体的例子：如果某fd上有2kb的数据，应用程序只读了1kb，ET就不会在下一次epoll\_wait的时候返回，读完以后又有新数据才返回。而LT每次都会返回这个fd，只要这个fd有数据可读。所以在Zaver里我们需要用epoll的ET，用法的模式是固定的，把fd设为nonblocking，如果返回某fd可读，循环read直到EAGAIN（如果read返回0，则远端关闭了连接）。
 
-* 当server和浏览器保持着一个长连接的时候，浏览器突然被关闭了，那么server端怎么处理这个socket？
+* 如果某个线程在处理fd的同时，又有新的一批数据发来，该fd可读（注意和上面那个问题的区别，一个是处理同一批数据时，一个是处理新来的一批数据），那么该fd会被分给另一个线程，这样两个线程处理同一个fd肯定就不对了。
 
-答：此时该fd在事件循环里会返回一个可读事件，然后就被分配给了某个线程，该线程read会返回0，代表对方已关闭这个fd，于是server端也调用close即可。
+答：用EPOLLONESHOT解决这个问题。在fd返回可读后，需要显式地设置一下才能让epoll重新返回这个fd。
+
+* 当server和浏览器保持着一个长连接的时候，1)浏览器突然被关闭了，2)断电了/被拔网线了，那么server端怎么处理这个socket？
+
+答：对于1)，此时该fd在事件循环里会返回一个可读事件，然后就被分配给了某个线程，该线程read会返回0，代表对方已关闭这个fd，于是server端也调用close即可。对于2)，协议栈无法感知，SO_KEEPALIVE超时时间太长不适用，所以只能通过应用层timer超时事件解决。
+
+* 如何设计和实现timer？
+
+答：Nginx把timer实现成了rbtree，这就很奇怪，timer模块需要频繁找最小的key（最早超时的事件）然后处理后删除，这个场景下难道不是最小化堆是最好的数据结构么？然后通过[搜索](http://tengine.taobao.org/download/programmer-201209-Tengine.pdf)得知阿里的Tengine将timer的实现了4-heap（四叉最小堆）。四叉堆是二叉堆的变种，比二叉堆有更浅的深度和更好的CPU Cache命中率。Tengine团队声称用最小堆性能提升比较明显。在Zaver中为了简化实现，使用了二叉堆来实现timer的功能。
 
 * 既然把socket的fd设置为non-blocking，那么如果有一些数据包晚到了，这时候read就会返回-1，errno设置为EAGAIN，等待下次读取。这是就遇到了一个blocking read不曾遇到的问题，我们必须将已读到的数据保存下来，并维护一个状态，以表示是否还需要数据，比如读到HTTP Request Header, `GET /index.html HTT`就结束了，在blocking I/O里只要继续read就可以，但在nonblocking I/O，我们必须维护这个状态，下一次必须读到'P'，否则HTTP协议解析错误。
 
