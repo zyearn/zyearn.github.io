@@ -195,14 +195,14 @@ zv_http_header_handle_t zv_http_headers_in[] = {
 
 * 压力测试
 
-答：压力测试为了测量网站对高并发的承受程度，在哪个并发度会使网站挂掉。这个有很多成熟的方案了，比如http_load, webbench, ab等等。我最终选择了<a href="http://home.tiscali.cz/~cz210552/webbench.html" target="_blank">webbench</a>，理由是简单，用fork来模拟client，代码只有几百行，出问题可以马上根据webbench源码定位到底是哪个操作使Server挂了。另外因为后面提到的一个问题，我仔细看了下Webbench的源码，并且非常推荐C初学者看一看，只有几百行，但是涉及了命令行参数解析、fork子进程、父子进程用pipe通信、信号handler的注册、构建HTTP协议头的技巧等一些编程上的技巧。
+答：压力测试为了测量网站对高并发的承受程度，在哪个并发度会使网站挂掉。这个有很多成熟的方案了，比如http_load, webbench, ab等等。我最终选择了<a href="http://home.tiscali.cz/~cz210552/webbench.html" target="_blank">webbench</a>，理由是简单，用fork来模拟client，代码只有几百行，出问题可以马上根据webbench源码定位到底是哪个操作使Server挂了，这就说到了我在做压力测试时遇到一个问题，然后看了一下Webbench的源码，就很快找到了问题所在（并且非常推荐C初学者看一看它的源码，只有几百行，但是涉及了命令行参数解析、fork子进程、父子进程用pipe通信、信号handler的注册、构建HTTP协议头的技巧等一些编程上的技巧）。
 
-* 用Webbech测试，Server在测试结束时挂了
+之前提到的那个问题是：用Webbech测试，Server在测试结束时挂了。
 
-答：百思不得其解，不管时间跑多久，并发量开多少，都是在最后webbench结束的时刻，server挂了，所以我猜想肯定是这一刻发生了什么“事情”。
+百思不得其解，不管时间跑多久，并发量开多少，都是在最后webbench结束的时刻，server挂了，所以我猜想肯定是这一刻发生了什么“事情”。
 开始调试定位错误代码，我用的是打log的方式，后面的事实证明在这里这不是很好的方法，在多线程环境下要通过看log的方式定位错误是一件比较困难的事。最后log输出把错误定位在向socket里write对方请求的文件，也就是系统调用挂了，write挂了难道不是返回-1的吗？于是唯一的解释就是进程接受到了某signal，这个signal使进程挂了。于是用strace重新进行测试，在strace的输出log里发现了问题，系统在write的时候接受到了SIGPIPE，默认的signal handler是终止进程。SIGPIPE产生的原因为，对方已经关闭了这个socket，但进程还往里面写。所以我猜想webbench在测试时间到了之后不会等待server数据的返回直接close掉所有的socket。抱着这样的怀疑去看webbench的源码，果然是这样的，webbench设置了一个定时器，在正常测试时间会读取server返回的数据，并正常close；而当测试时间一到就直接close掉所有socket，不会读server返回的数据，这就导致了zaver往一个已被对方关闭的socket里写数据，系统发送了SIGPIPE。
 
-解决方案也非常简单，把SIGPIPE的信号handler设置为SIG_IGN，意思是忽略该信号即可。
+解决方案也非常简单，把SIGPIPE的信号handler设置为SIG_IGN，忽略该信号即可。
 
 ## 不足
 
