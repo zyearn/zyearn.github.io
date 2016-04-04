@@ -59,7 +59,7 @@ while ( 1 ) {
 
 虽然这个程序能正常工作，但它完全不能投入到工业使用，原因是server在处理一个客户请求的时候无法接受别的客户，也就是说，这个程序无法同时满足两个想得到echo服务的用户，这是无法容忍的，试想一下你在用微信，然后告诉你有人在用，你必须等那个人走了以后才能用。
 
-然后一个改进的解决方案被提出来了：accept以后fork，父进程继续accept，子进程来处理这个fd。这个也是一些教材上的标准示例，代码大概长这样：
+然后一个改进的解决方案被提出来了：accept以后fork，父进程继续accept，子进程来处理这个fd。这也是一些教材上的标准示例，代码大概长这样：
 
 {% codeblock lang:c %}
 /* Main loop */
@@ -171,7 +171,7 @@ Zaver的运行架构在上文介绍完毕，下面将总结一下我在开发时
 
 答：Nginx把timer实现成了rbtree，这就很奇怪，timer模块需要频繁找最小的key（最早超时的事件）然后处理后删除，这个场景下难道不是最小化堆是最好的数据结构么？然后通过[搜索](http://tengine.taobao.org/download/programmer-201209-Tengine.pdf)得知阿里的Tengine将timer的实现了4-heap（四叉最小堆）。四叉堆是二叉堆的变种，比二叉堆有更浅的深度和更好的CPU Cache命中率。Tengine团队声称用最小堆性能提升比较明显。在Zaver中为了简化实现，使用了二叉堆来实现timer的功能。
 
-* 既然把socket的fd设置为non-blocking，那么如果有一些数据包晚到了，这时候read就会返回-1，errno设置为EAGAIN，等待下次读取。这是就遇到了一个blocking read不曾遇到的问题，我们必须将已读到的数据保存下来，并维护一个状态，以表示是否还需要数据，比如读到HTTP Request Header, `GET /index.html HTT`就结束了，在blocking I/O里只要继续read就可以，但在nonblocking I/O，我们必须维护这个状态，下一次必须读到'P'，否则HTTP协议解析错误。
+* 把fd设置为non-blocking后，while循环需要不断地read直到返回-1，errno为EAGAIN，然后等待下次epoll_wait返回这个fd再继续处理。这时就遇到了一个blocking read不曾遇到的问题：数据可能分包到达，于是在协议解析到一半的时候read就返回-1，所以我们必须将已读到的数据保存下来，并维护一个状态，以表示是否还需要数据，比如解析HTTP Request Header的时候, 读到`GET /index.html HTT`就结束了，在blocking I/O里只要继续read就可以，但在nonblocking I/O，我们必须维护这个状态，下一次必须读到'P'，否则HTTP协议解析错误。
 
 答：解决方案是维护一个状态机，在解析Request Header的时候对应一个状态机，解析Header Body的时候也维护一个状态机，Zaver状态机的时候参考了Nginx在解析header时的实现，我做了一些精简和设计上的改动。
 
