@@ -1,8 +1,8 @@
 ---
 layout: page
-title: Blog Archive
-footer: false
 comments: false
+sharing: true
+footer: true
 ---
 
 <div id="blog-archives">
