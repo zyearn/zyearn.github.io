@@ -9,7 +9,7 @@ categories: Program
 写程序的时候，经常会遇到这样的需求：已知rand函数，生成一个范围在[0, N)的随机数。
 比如我们有15个球，随机选择一个，则此时N等于15。
 在这个问题中，我们通常希望这个随机数是满足均匀分布（uniform distribution）的，即每个数字出现的概率是一样的。
-还有一类随机数生成问题，是要求实现rand这个函数本身的，这类问题已经被广泛[讨论](https://en.wikipedia.org/wiki/Pseudorandom_number_generator)过，这篇文章不会讨论这类的问题。
+还有一类随机数生成问题，是要求实现rand这个函数本身的，[这类问题](https://en.wikipedia.org/wiki/Pseudorandom_number_generator)已经被广泛过，这篇文章不会讨论这类的问题。
 
 之前看到的几乎所有的地方(包括我自己)都是这么写的：
 
