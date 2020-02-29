@@ -25,4 +25,4 @@ Twitter: https://twitter.com/JiashunZhu
 有问题想交流的话请发邮件：`zhujiashun2010ATgmail.com`，把`AT`换成`@`，我会尽力回复。
 我非常鼓励大家如果在一些问题上尝试解决但仍无法解决，去寻找第三方的帮助，这很有可能真的是一个值得讨论的问题。
 
-微信公众号：![qrcode](/images/qrcode.png)
+微信公众号：![qrcode](/images/qrcode.jpeg)
