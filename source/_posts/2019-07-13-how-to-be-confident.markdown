@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "如何变得自信"
+title: "心理学阅读（一）"
 date: 2019-07-13 18:46
 comments: true
 categories: Psychology
