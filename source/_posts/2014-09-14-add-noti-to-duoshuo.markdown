@@ -63,7 +63,7 @@ var options = {
 
 #### 邮件推送
 
-Mutt是一个命令行邮件发送工具，能达到我们的目的，设置请参考我的[wiki](http://wiki.lifeofzjs.com/tool/mutt.html)。
+Mutt是一个命令行邮件发送工具，能达到我们的目的，设置请参考我的[wiki](http://wiki.zyearn.com/tool/mutt.html)。
 
 ### 设置cron
 

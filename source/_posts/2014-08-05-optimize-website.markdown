@@ -46,7 +46,7 @@ Waterfall是这个样子的：
 
 ### Recommendation 6: Avoid landing page redirects 
 
-我把www.lifeofzjs.com重定向到了lifeofzjs.com，目的就是为了不让两个地址的A记录同时解析到同一个ip，防止搜索引擎认为这是两个网站，所以这条忽略。
+我把www.zyearn.com重定向到了zyearn.com，目的就是为了不让两个地址的A记录同时解析到同一个ip，防止搜索引擎认为这是两个网站，所以这条忽略。
 
 ### Recommendation 7: Use a Content Delivery Network (CDN)
 
