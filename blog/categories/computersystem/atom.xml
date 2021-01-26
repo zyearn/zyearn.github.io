@@ -1,0 +1,785 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: computersystem | ]]></title>
+  <link href="http://zyearn.com/blog/categories/computersystem/atom.xml" rel="self"/>
+  <link href="http://zyearn.com/"/>
+  <updated>2021-01-26T23:42:39+01:00</updated>
+  <id>http://zyearn.com/</id>
+  <author>
+    <name><![CDATA[Jiashun Zhu]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[当执行kill -9 PID时系统发生了什么]]></title>
+    <link href="http://zyearn.com/blog/2015/03/22/what-happens-when-you-kill-a-process/"/>
+    <updated>2015-03-22T20:46:00+01:00</updated>
+    <id>http://zyearn.com/blog/2015/03/22/what-happens-when-you-kill-a-process</id>
+    <content type="html"><![CDATA[<p>我们时常遇到这样的需求：要杀死一个正在运行运行的进程。这时候可以在终端输入
+<code>
+kill -9 &lt;PID&gt;
+</code>
+（其中9的意思是SIGKILL，完整的linux信号请看<a href="http://www.comptechdoc.org/os/linux/programming/linux_pgsignals.html">这里</a>）之后你再用ps查看进程的时候，会发现那个进程已经被杀掉了。</p>
+
+<!-- more -->
+
+
+<p>本文将说明在LINUX系统下，用户在终端输入<code>kill -9 &lt;PID&gt;</code>之后，整个系统到底发生了什么，我们将深入到内核代码。一开始我在想这个问题的时候遇到了一些问题，比如进程是怎么知道自己收到信号的？在执行进程工作代码的同时还要不断轮询有没有新到的信号吗？代价也太大了吧？那是不是基于什么异步通知的方案呢？在说明LINUX是怎么做的之前，先解释一点基础的概念。</p>
+
+<h2>什么是信号（SIGNAL）</h2>
+
+<p>我自己的理解：信号之于进程，就好比中断之于CPU，是一种信息传递的方式。官方的解释是A signal is an asynchronous notification sent to a process or to a specific thread within the same process in order to notify it of an event that occurred.
+一个程序在运行的时候，你可以发各种信号给这个进程，进程对这个信号做出响应。比如你发个SIGKILL给一个进程，该进程就知道用户要杀死它，然后就会终止进程。
+一个更常见的例子，你在终端运行一个进程以后，如果是非后台进程，它会在console输出一些log，这时候shell也不能接受输入了，这时候你按下<code>control+c</code>，进程就被终止了，在这个过程中你就给这个进程发送了一个信号（SIGINT，interrupt signal），在默认情况下，是终止改进程。
+那什么时候是非默认情况呢？这里需要引入信号处理器（signal handler）的概念，你可以为一部分信号编写特定的处理函数，比如在默认情况下，SIGINT是结束进程，你可以修改这个默认行为使它什么都不做（即一个空函数），但是有些信号的行为是无法修改的，比如SIGKILL。</p>
+
+<h2>kill 命令</h2>
+
+<p>在LINUX下有一个<code>kill</code>的命令，第一次用的同学会以为这是一个“杀死”某个进程的命令，其实并不是很准确。这个命令的作用就是给指定PID的进程发送信号，到底发送什么信号也是由参数指定的，如果不指定信号，默认是发送SIGTERM，它的默认行为是终止进程。其实<code>kill</code>也是个程序，它内部会调用system call的kill来发起真正信号传递过程。
+更详细的介绍请<code>man 2 kill</code></p>
+
+<h2>shell fork进程</h2>
+
+<p>当你敲下命令，按下回车，程序就执行了，其实这里也是个很复杂的过程。涉及到了shell的运行原理，每一个shell的实现都不一样，但核心原理是不变的：<code>fork</code>一个子进程，再调用<code>execve</code>那一系列系统调用。想了解一个shell是怎么写的，我觉得最好的资料是《Unix/Linux编程实践教程》第八章。本文不会详细解释<code>shell/fork/execve</code>，我会在另一篇博客里详细解释当你执行<code>fork</code>时，系统发生了什么。</p>
+
+<p>好了，基础知识差不多介绍完了，下面我们进入下一阶段。</p>
+
+<h2>kill -9 PID</h2>
+
+<p>我们先讲原理再深入实现细节。所有内核代码都基于3.16.3，本文出现的所有内核代码是我删除了一些错误处理，加锁，临界判断后的结果，所以是比较核心的代码。</p>
+
+<p>执行<code>kill -9 &lt;PID&gt;</code>，进程是怎么知道自己被发送了一个信号的？首先要产生信号，执行kill程序需要一个pid，根据这个pid找到这个进程的task_struct（这个是Linux下表示进程/线程的结构），然后在这个结构体的特定的成员变量里记下这个信号。
+这时候信号产生了但还没有被特定的进程处理，叫做Pending signal。
+等到下一次CPU调度到这个进程的时候，内核会保证先执行<code>do\_signal</code>这个函数看看有没有需要被处理的信号，若有，则处理；若没有，那么就直接继续执行该进程。所以我们看到，在Linux下，信号并不像中断那样有异步行为，而是每次调度到这个进程都是检查一下有没有未处理的信号。</p>
+
+<p>当然信号的产生不仅仅在终端kill的时候才产生的。总结起来，大概有如下三种产生方式：</p>
+
+<ul>
+<li>硬件异常：比如除0</li>
+<li>软件通知：比如当你往一个已经被对方关闭的管道中写数据的时候，会发生SIGPIPE</li>
+<li>终端信号：你输入<code>kill -9 &lt;PID&gt;</code>，或者<code>control+c</code>就是这种类型</li>
+</ul>
+
+
+<p>大概原理就是这个样子的，接下来我们来看一看内核的实现。</p>
+
+<h2>实现</h2>
+
+<p>首先，你在shell里输入<code>kill</code>这个命令，它本身就是个程序，是有源代码的，它的代码可以在Linux的<a href="http://git.savannah.gnu.org/cgit/coreutils.git/tree/src/">coreutils</a>里找到。代码很长，我就不全复制过来了，有兴趣的可以去仔细看看。它的核心代码是长这样的：
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>static int
+</span><span class='line'>send_signals (int signum, char &lt;em&gt;const &lt;/em&gt;argv)
+</span><span class='line'>{
+</span><span class='line'>    &hellip;
+</span><span class='line'>    kill (pid, signum);
+</span><span class='line'>    &hellip;
+</span><span class='line'>}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;int
+</span><span class='line'>main (int argc, char **argv)
+</span><span class='line'>{
+</span><span class='line'>    &hellip;
+</span><span class='line'>    send_signals (signum, argv + optind));
+</span><span class='line'>    &hellip;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure></p>
+
+<p>我们看到最后调用了系统调用<code>kill</code>，其代码在Linux内核<code>linux-3.16.3/kernel/signal.c</code>中实现。在看kill源码之前，先把这个函数最终要操作的结构体看一下，这个struct很长，只列出了信号相关的部分：
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+<span class='line-number'>144</span>
+<span class='line-number'>145</span>
+<span class='line-number'>146</span>
+<span class='line-number'>147</span>
+<span class='line-number'>148</span>
+<span class='line-number'>149</span>
+<span class='line-number'>150</span>
+<span class='line-number'>151</span>
+<span class='line-number'>152</span>
+<span class='line-number'>153</span>
+<span class='line-number'>154</span>
+<span class='line-number'>155</span>
+<span class='line-number'>156</span>
+<span class='line-number'>157</span>
+<span class='line-number'>158</span>
+<span class='line-number'>159</span>
+<span class='line-number'>160</span>
+<span class='line-number'>161</span>
+<span class='line-number'>162</span>
+<span class='line-number'>163</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>struct task_struct {
+</span><span class='line'>    &hellip;
+</span><span class='line'>/&lt;em&gt; signal handlers &lt;/em&gt;/
+</span><span class='line'>    struct signal_struct &lt;em&gt;signal; /&lt;/em&gt; 一个进程所有线程共享一个signal &lt;em&gt;/
+</span><span class='line'>    struct sighand_struct &lt;/em&gt;sighand;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;sigset_t blocked, real_blocked; /* 哪些信号被阻塞了 */
+</span><span class='line'>sigset_t saved_sigmask; /* restored if set_restore_sigmask() was used */
+</span><span class='line'>struct sigpending pending; /* 进程中的多个线程有各自的pending */
+</span><span class='line'>...
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;继续看kill系统调用，我将核心代码列在了下面，想看完整版的点[这里](http://lxr.free-electrons.com/source/kernel/signal.c#L2893)。为了方便理解，我给核心逻辑增加了注释。
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;SYSCALL_DEFINE2(kill, pid_t, pid, int, sig)
+</span><span class='line'>{
+</span><span class='line'>    &hellip;
+</span><span class='line'>    return kill_something_info(sig, &amp;info, pid);
+</span><span class='line'>}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;static int kill_something_info(int sig, struct siginfo *info, pid_t pid)
+</span><span class='line'>{
+</span><span class='line'>    int ret;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;// 如果pid大于0，就把信号发送给指定的进程
+</span><span class='line'>if (pid &gt; 0) {
+</span><span class='line'>    ret = kill_pid_info(sig, info, find_vpid(pid));
+</span><span class='line'>    return ret;
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>// 如果pid &lt;=0 并且不等于-1，发送信号给-pid指定的进程组
+</span><span class='line'>if (pid != -1) {
+</span><span class='line'>    ret = __kill_pgrp_info(sig, info,
+</span><span class='line'>            pid ? find_vpid(-pid) : task_pgrp(current));
+</span><span class='line'>} else {    
+</span><span class='line'>    //否则发信号给除自己所属进程之外的其它所有进程
+</span><span class='line'>    int retval = 0, count = 0;
+</span><span class='line'>    struct task_struct * p;
+</span><span class='line'>
+</span><span class='line'>    for_each_process(p) {
+</span><span class='line'>        if (task_pid_vnr(p) &gt; 1 &amp;&amp;
+</span><span class='line'>                !same_thread_group(p, current)) {
+</span><span class='line'>            int err = group_send_sig_info(sig, info, p);
+</span><span class='line'>            ++count;
+</span><span class='line'>            if (err != -EPERM)
+</span><span class='line'>                retval = err;
+</span><span class='line'>        }
+</span><span class='line'>    }
+</span><span class='line'>    ret = count ? retval : -ESRCH;
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>return ret;
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;
+</span><span class='line'>因为这个`kill_something_info`函数会根据pid的正负来决定是发给特定的进程还是一个进程组，我们下面主要来看发给一个特定进程的情况，即调用`kill_pid_info`：
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;int kill_pid_info(int sig, struct siginfo &lt;em&gt;info, struct pid &lt;/em&gt;pid)
+</span><span class='line'>{
+</span><span class='line'>    int error = -ESRCH;
+</span><span class='line'>    struct task_struct *p;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;p = pid_task(pid, PIDTYPE_PID);
+</span><span class='line'>if (p) {
+</span><span class='line'>    error = group_send_sig_info(sig, info, p);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>return error;
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;
+</span><span class='line'>注意这个函数，出现了我们上文提到的`task_strcut`，这个是Linux下表示每个进程/线程的结构体，根据`struct pid`找到这个结构后，就调用了`group_send_sig_info`：
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;int group_send_sig_info(int sig, struct siginfo &lt;em&gt;info, struct task_struct &lt;/em&gt;p)
+</span><span class='line'>{
+</span><span class='line'>    int ret;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;ret = do_send_sig_info(sig, info, p, true);
+</span><span class='line'>
+</span><span class='line'>return ret;
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;int do_send_sig_info(int sig, struct siginfo &lt;em&gt;info, struct task_struct &lt;/em&gt;p,
+</span><span class='line'>            bool group)
+</span><span class='line'>{
+</span><span class='line'>    unsigned long flags;
+</span><span class='line'>    int ret = -ESRCH;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;if (lock_task_sighand(p, &amp;flags)) {
+</span><span class='line'>    ret = send_signal(sig, info, p, group);
+</span><span class='line'>    unlock_task_sighand(p, &amp;flags);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>return ret;
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;static int send_signal(int sig, struct siginfo &lt;em&gt;info, struct task_struct &lt;/em&gt;t,
+</span><span class='line'>            int group)
+</span><span class='line'>{
+</span><span class='line'>    int from_ancestor_ns = 0;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h1&gt;ifdef CONFIG_PID_NS&lt;/h1&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;from_ancestor_ns = si_fromuser(info) &amp;&amp;
+</span><span class='line'>           !task_pid_nr_ns(current, task_active_pid_ns(t));
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h1&gt;endif&lt;/h1&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;return __send_signal(sig, info, t, group, from_ancestor_ns);
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;static int __send_signal(int sig, struct siginfo &lt;em&gt;info, struct task_struct &lt;/em&gt;t,
+</span><span class='line'>            int group, int from_ancestor_ns)
+</span><span class='line'>{
+</span><span class='line'>    struct sigpending &lt;em&gt;pending;
+</span><span class='line'>    struct sigqueue &lt;/em&gt;q;
+</span><span class='line'>    int override_rlimit;
+</span><span class='line'>    int ret = 0, result;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;// 发送给进程和线程的区别在这里，如果是进程，则&amp;t-&gt;signal-&gt;shared_pending，否则&amp;t-&gt;pending
+</span><span class='line'>pending = group ? &amp;t-&gt;signal-&gt;shared_pending : &amp;t-&gt;pending;
+</span><span class='line'>
+</span><span class='line'>/*
+</span><span class='line'> * fast-pathed signals for kernel-internal things like SIGSTOP
+</span><span class='line'> * or SIGKILL.
+</span><span class='line'> */
+</span><span class='line'>if (info == SEND_SIG_FORCED)
+</span><span class='line'>    goto out_set;
+</span><span class='line'>
+</span><span class='line'>...
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;out_set:
+</span><span class='line'>    // 把信号通知listening signalfd.
+</span><span class='line'>    signalfd_notify(t, sig);&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;// 将sig加入目标进程的信号位图中，待下一次CPU调度的时候读取
+</span><span class='line'>sigaddset(&amp;pending-&gt;signal, sig);
+</span><span class='line'>
+</span><span class='line'>// 用于决定由哪个进程/线程处理该信号，然后wake_up这个进程/线程
+</span><span class='line'>complete_signal(sig, t, group);
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;ret:
+</span><span class='line'>    trace_signal_generate(sig, info, t, group, result);
+</span><span class='line'>    return ret;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure></p>
+
+<p>可以看到，最终调用到<code>__send_signal</code>，设置信号的数据结构，wake up需要处理信号的进程，整个信号传递的过程就结束了。这时候信号还没有被进程处理，还是一个pending signal。</p>
+
+<h2>信号的处理</h2>
+
+<p>内核调度到该进程时，会调用<code>do_notify_resume</code>来处理信号队列中的信号，之后这个函数又会调用<code>do_signal</code>，再调用<code>handle_signal</code>，具体过程就不用代码说明了，最后会找到每一个信号的处理函数，问题是这个怎么找到？</p>
+
+<p>还记得在上文提到的task_struct吗，里面有一个成员变量<code>sighand_struct</code>就是用来存储每个信号的处理函数的。
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>struct sighand_struct {
+</span><span class='line'>    atomic_t        count;  /&lt;em&gt; 引用计数 &lt;/em&gt;/
+</span><span class='line'>    struct k_sigaction  action[_NSIG]; /&lt;em&gt; 存储处理函数的结构 &lt;/em&gt;/
+</span><span class='line'>    spinlock_t      siglock;    /&lt;em&gt; 自旋锁 &lt;/em&gt;/
+</span><span class='line'>    wait_queue_head_t   signalfd_wqh;   /&lt;em&gt; 等待队列 &lt;/em&gt;/
+</span><span class='line'>};&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;struct k_sigaction {
+</span><span class='line'>    struct sigaction sa;
+</span><span class='line'>}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;struct sigaction {
+</span><span class='line'>    __sighandler_t  sa_handler;
+</span><span class='line'>    unsigned long   sa_flags;
+</span><span class='line'>    sigset_t    sa_mask;    /&lt;em&gt; mask last for extensibility &lt;/em&gt;/
+</span><span class='line'>};</span></code></pre></td></tr></table></div></figure></p>
+
+<p>其中<code>sa_handler</code>就指向了信号的处理程序。</p>
+
+<h2>为某个信号注册处理函数</h2>
+
+<p>Linux提供了修改信号的处理函数的system call，具体如何使用这些system call不是本文的重点，如果你有兴趣可以参考《Computer System: A programmer&rsquo;s perspective》8.5节或者参考资料[6]，里面提供了非常详细的例子。</p>
+
+<h2>总结</h2>
+
+<p>这篇文章基于Linux 3.16.3讲述了从shell敲下<code>kill -9 &lt;PID&gt;</code>后整个系统发生了什么。主要涉及从用户态的shell程序开始，执行coreutils中kill，之后陷入到内核代码，分析了相关的数据结构，信号产生和传递的原理以及核心代码。</p>
+
+<h2>参考</h2>
+
+<p>[1] <a href="http://en.wikipedia.org/wiki/Unix_signal">http://en.wikipedia.org/wiki/Unix_signal</a><br>
+[2] <a href="http://stackoverflow.com/questions/1860175/how-does-a-process-come-to-know-that-it-has-received-a-signal">http://stackoverflow.com/questions/1860175/how-does-a-process-come-to-know-that-it-has-received-a-signal</a><br>
+[3] <a href="http://www.linuxjournal.com/article/3985">http://www.linuxjournal.com/article/3985</a><br>
+[4] <a href="http://blog.csdn.net/walkingman321/article/details/6167435">http://blog.csdn.net/walkingman321/article/details/6167435</a><br>
+[5] <a href="http://blog.csdn.net/morphad/article/details/9236975">http://blog.csdn.net/morphad/article/details/9236975</a><br>
+[6] <a href="http://www.alexonlinux.com/signal-handling-in-linux">http://www.alexonlinux.com/signal-handling-in-linux</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[异步vs非阻塞]]></title>
+    <link href="http://zyearn.com/blog/2014/03/29/sycron-vs-block/"/>
+    <updated>2014-03-29T20:13:00+01:00</updated>
+    <id>http://zyearn.com/blog/2014/03/29/sycron-vs-block</id>
+    <content type="html"><![CDATA[<p>在I/O模型中有两个概念特别容易混淆，就是同步和异步（synchronous vs nonsynchronous），阻塞和非阻塞（blocking vs nonblocking）的区别在什么地方。</p>
+
+<p>同步非阻塞可能吗，异步阻塞有可能吗？
+这几个概念在stevens的《UNIX网络编程（卷一）》6.2节写得很清楚，这里写个总结吧。</p>
+
+<!-- more -->
+
+
+<h2>阻塞I/O</h2>
+
+<p>最流行的I/O模型就是阻塞模型，如果数据没有准备好，那么程序就不会往下运行，一个例子是linux下的系统调用<code>read</code>和<code>write</code>，如果调用了read，但是file descriptor没有数据的话，就一直等待用户的输入。</p>
+
+<h2>非阻塞I/O</h2>
+
+<p>把一个file descriptor设置为非阻塞的意思就是，当数据没有准备好，返回一个错误码。在linux下的一个例子就是在<code>read</code>之前，调用<code>fcntl</code>将<code>O_NONBLOCK</code>作为参数，将fd设为非阻塞的。如果read返回错误码，那么就接着read，如此反复，这种方法叫轮询，浪费cpu时间。</p>
+
+<p>阻塞和非阻塞比较好理解的，然后我们来看同步和异步。</p>
+
+<h2>同步/异步IO</h2>
+
+<p>POSIX这样定义同步和异步：</p>
+
+<blockquote><p>同步I/O导致请求阻塞，直到I/O操作完成。
+异步I/O不导致进程阻塞。</p></blockquote>
+
+<p>根据同步的定义，我们得知，只要读或写的操作，是在当前线程完成的，在一段时间里只做I/O，其它事情都不能干，那么就是同步I/O。根据异步的定义，如果我们只需要发布一个命令，让小弟（别的线程）去进行读写操作，然后读写完了告诉主线程（通过回调函数），那么就是异步I/O。</p>
+
+<p>NodeJS就是通过小弟线程来实现异步I/O的。其实还有别的方法，比如Linux的AIO，是操作系统层面提供的异步方案，是真正的异步I/O，但它的使用现在非常受限，所以用得不是特别广泛。</p>
+
+<p>简单来说，理解同步异步的关键是<em>谁在进行真正的I/O</em>, 如果是主线程，那么就是同步；如果是小弟线程，小弟线程工作完了报告主线程，那么就是异步。</p>
+
+<p>所以，异步和非阻塞是完全两个概念。但在某些场景下，这两个概念是混用的：当讨论一个API返回速度的时候，异步和非阻塞都是立即返回，在这个上下文中，异步和非阻塞表示的意思相同。</p>
+
+<p>回到我们文章开头的问题：</p>
+
+<blockquote><p>同步非阻塞可能吗？</p></blockquote>
+
+<p>当然可能，阻塞和非阻塞I/O都属于同步I/O。</p>
+
+<blockquote><p>异步阻塞可能吗？</p></blockquote>
+
+<p>根本就没有这个概念，是我瞎造出来的。不过如果是用I/O线程来实现的“假异步”，线程读数据的依然是阻塞的，这时候勉强可以说是“异步阻塞”。真异步需要操作系统的支持。</p>
+
+<p>这里在顺便说一下，很多人以为epoll就是异步的，这个想法是错的，epoll是同步的，它只是用来告诉你哪个file descriptor可以读写了，至于怎么读怎么写，才是讨论异步或同步I/O的地方。</p>
+
+<h2>一些例子</h2>
+
+<p>同步阻塞：read/write，select/poll（有些说法说select是异步阻塞的，但select做的仅仅是告诉你哪些fd准备读写了，然后主线程可以开始读，所以根据定义，它应该还是同步的）。</p>
+
+<p>同步非阻塞：read/write(O_NONBLOCK)</p>
+
+<p>异步非阻塞：Linux上的AIO库</p>
+
+<h2>References</h2>
+
+<p>[1] <a href="http://www.ibm.com/developerworks/cn/linux/l-async">http://www.ibm.com/developerworks/cn/linux/l-async</a></p>
+
+<p>[2] <a href="http://book.douban.com/subject/1500149/">《UNIX网络编程》</a></p>
+
+<p>[3] <a href="http://www.cnblogs.com/Jerry-Chou/archive/2012/04/23/2466045.html">http://www.cnblogs.com/Jerry-Chou/archive/2012/04/23/2466045.html</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[CSAPP: how to write a Web Proxy]]></title>
+    <link href="http://zyearn.com/blog/2014/02/21/csapp-proxy-lab/"/>
+    <updated>2014-02-21T20:59:00+01:00</updated>
+    <id>http://zyearn.com/blog/2014/02/21/csapp-proxy-lab</id>
+    <content type="html"><![CDATA[<p>这个lab很有意思，要我们实现一个简单的多线程web proxy。看起来很简单，实现起来还是有很多细节需要考虑。这里是一个官方的<a href="http://csapp.cs.cmu.edu/public/proxylab.pdf" target="_blank">介绍</a>。一共写了一天多，功能不是非常完善，代码只能处理<code>GET</code>请求。</p>
+
+<p>整体的思路是这样的，proxy作为client和server的中间媒介，client发给请求给proxy，proxy然后把请求转发给server，再从server拿到response，然后再把这个response转发给client。也就是说proxy既是client的服务器，又是server的客户。所以这个lab涉及到了客户端编程和服务器端编程。</p>
+
+<!-- more -->
+
+
+<p>写完以后将浏览器设置好代理，然后用telnet先测试会比较好。整个lab的原理非常简单，没有高深的算法，然后剩下的就是实现了。</p>
+
+<h2>编程时需要注意的点</h2>
+
+<ol>
+<li><p>在proxy打开与server的TCP连接的时候，需要调用<code>gethostbyname</code>或者<code>gethostbyaddr</code>来通过DNS获取server主机的DNS信息，比如ip地址，别名之类的，返回的是一个struct的指针。但是这个struct是一个静态变量，也就是说这些函数不支持多线程的访问，是线程不安全的。解决方法是定义一个mutex来加锁，任意时刻只能又一个线程在调这些函数。</p></li>
+<li><p>本书的作者提供了robust IO让我们方便地对socket file descriptor进行读写，不要用C库。</p></li>
+<li><p>调用
+     Signal(SIGPIPE, SIG_IGN);
+将<code>SIGPIPE</code>这个信号忽略掉。如果尝试两次发送数据到一个已经被对方关闭的socket上时，内核会发送一个<code>SIGPIPE</code>信号给程序，在默认情况下，会终止当前程序，显然不是我们想要的，所以要忽略它。这里又一个stackoverflow上的<a href="http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly" target="_blank">相关问题</a>。还有一点，往broken pipe里写会使errno等于EPIPE，而往broken pipe里读会使errno等于ECONNRESET。</p></li>
+<li><p>HTTP/1.1里默认将connection定义为keep-alive，也就是一条TCP连接可以处理多个请求，不用每次都要重新建立TCP连接。我们的简易proxy还无法提供这样的功能，所以在读client发过来的header的时候，如果是<code>Connection: keep-alive</code>或者<code>Proxy-Connection: keep-alive</code>，我们都要把它们换成<code>Connection: close</code>或<code>Proxy-Connection: close</code>。</p></li>
+<li><p>创建线程以后记得要detach掉，否则这个线程结束后不会释放资源直到有别的线程join了这个线程。</p></li>
+<li><p>如果header里没有<code>Content-Length</code>这一项，怎么确定body的长度？这个问题一直没想过直到现在遇到了这个问题。这个长度写到了body里，这种方式叫做<code>Transfer Encoding</code>。因为服务器在处理静态对象时，事先知道对象的大小；而在处理动态对象时，无法事先知道body的长度。实现的时候分两种情况来从sock中读数据。</p></li>
+<li><p>需要正确关闭所有的文件描述符。系统给一个程序能打开的描述符数量做了一个限制。如果是ubuntu下，可以通过<code>cat /proc/sys/fs/file-max</code>来查看最大文件描述符数。在proxy运行一段时间，确保描述符不会持续增加。在ubuntu下查看程序打开的描述符方法：找到程序的pid，然后<code>cat /proc/$pid/fd</code>。</p></li>
+<li><p>记得错误处理，这个一直是个麻烦问题。</p></li>
+</ol>
+
+
+<h2>源码</h2>
+
+<p>全部的代码放在了<a href="https://github.com/zyearn/csapp-lab/tree/master/proxylab-handout" target="_blank">github</a>。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[CSAPP: Shell Lab]]></title>
+    <link href="http://zyearn.com/blog/2014/02/18/csapp-shell-lab/"/>
+    <updated>2014-02-18T15:46:00+01:00</updated>
+    <id>http://zyearn.com/blog/2014/02/18/csapp-shell-lab</id>
+    <content type="html"><![CDATA[<p>这个实验要求我们写一个简单的shell，能够执行一些内置的命令和系统提供的程序，比如echo和ps，这里是详细的<a href="http://csapp.cs.cmu.edu/public/shlab.pdf" target="_blank">要求</a>。这个shell需要提供最基础的功能，前台执行程序，后台执行程序，能从terminal接受SIGINT(ctrl+c)信号和SIGTSTP(ctrl+z)信号来终止和停止程序。</p>
+
+<p>整体框架是这样的：从stdin读入用户命令，然后parse这个命令，如果是内置命令(比如quit，退出shell的命令)，则立刻执行，否则<code>fork</code>一个子进程，用<code>execve</code>把子进程的地址空间替换为相应的程序。另外为了支持用户发送信号给shell，还需要写3个信号处理程序，分为处理SIGCHLD, SIGINT和SIGTSTP。</p>
+
+<!-- more -->
+
+
+<p>这个lab里不要求我们写管道的功能，比如<code>ls | grep "abc"</code>，如果要写的话也比较方便，用pipe就可以实现，有兴趣的同学可以自己实现，这里需要注意每个进程一定把不用的file descriptor关闭掉。原因是在<code>fork</code>之前要初始化管道，于是父子进程的管道descripor指向的file table的<code>ref count</code>是2，如果父子进程不关闭它不需要的读写描述符，那么资源不回收是小事，更要命的是子进程可能会一直读不到管道EOF然后一直等待管道另一方的输入。</p>
+
+<h2>需要注意的一些东西：</h2>
+
+<ol>
+<li><p>需要修改子进程的进程组ID。原因是，fork出来的子进程和父进程的进程组ID是相同的，所以启动我们的shell后按ctrl+c发送SIGINT信号给shell，会同时发给shell和shell的子进程，包括后台进程，然后这个进程组的进程都将会被关闭。这显然不是正确的，我们的预期是只发给shell，然后由信号的handler来处理这个信号（如果有前台进程，那么发送SIGINT给这个进程组；否则就什么都不做）。所以在<code>fork</code>之后<code>execve</code>之前需要调用<code>setpgid(0, 0)</code>，这个函数把当前进程的进程组id设置为当前进程的进程号。</p></li>
+<li><p>当shell接收到用户发来的SIGINT或SIGTSTP时，shell需要将这个信号转发相关的进程组，而不是单个进程，所以在用kill函数的时候第一个参数是<code>-pid</code>。</p></li>
+<li><p>在fork之前，主进程需要先用<code>sigprocmask</code>函数来block信号SIGCHLD，然后再unblock，这样做的目的是防止<code>addjob</code>和<code>deletejob</code>乱序执行。在某种调度顺序下，子进程先完成任务，发送SIGCHLD给父进程，父进程于是执行handler来处理，其中需要调用<code>deletejob</code>，这个时候<code>addjob</code>可能没有执行。注意在子进程也要unblock这个信号。</p></li>
+<li><p>程序需要处理别的程序给子进程发送信号的情况，此时的shell需要正确处理。比如，子进程自己给自己发送了一个SIGTSTP，然后kernel会给shell发送一个SIGCHLD（子进程终止或停止，kernel都会给父进程发送SIGCHLD），shell需要正确地输出相关信息到标准输出。</p></li>
+</ol>
+
+
+<h2>拓展</h2>
+
+<p>这个shell功能非常基础，接下来为它提供一些高级功能，这些高级功能会更新到我的第三版实现中。</p>
+
+<ol>
+<li><p>管道。虽然上面说了管道实现起来比较容易，其实实际实现起来还是有很多值得讨论的地方，比如多级管道怎么实现呢？我认为一个比较好的实现方法是实现一个自顶向下的parser，输出一个语法树，递归地对它进行处理即可。</p></li>
+<li><p>重定向。这个比较简单，只要打开文件，dup文件描述符到标准输出或标准输入即可。</p></li>
+</ol>
+
+
+<h2>源码</h2>
+
+<p>这个lab我分别为第二版和第三版做了两次，第二版的代码在<a href="https://github.com/zyearn/csapp-lab-2e/tree/master/shlab-handout">这里</a>，第三版的代码在<a href="https://github.com/zyearn/csapp-lab-3e/tree/master/shlab-handout">这里</a>。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[CSAPP: Cache Lab]]></title>
+    <link href="http://zyearn.com/blog/2014/02/16/csapp-cache-lab/"/>
+    <updated>2014-02-16T11:52:00+01:00</updated>
+    <id>http://zyearn.com/blog/2014/02/16/csapp-cache-lab</id>
+    <content type="html"><![CDATA[<p>这个实验分为PART A和PART B。PART A要求我们写一个cache模拟器，PART B要求我们利用cache来优化一个矩阵的转置以达到cache miss最少。</p>
+
+<p>目前只完成了A部分，B部分等把CSAPP的其它实验全部做完了有空的话再回来做，剩下的几个lab也都很有意思。</p>
+
+<p>这个simulator完全要自己写，没有给函数接口和数据结构，这些要自己设计。最终的binary接受4个参数：</p>
+
+<!-- more -->
+
+
+<p><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>-b  // b bits来表示block大小
+</span><span class='line'>-E  // 一个set里有E项，即E-way associativity
+</span><span class='line'>-s  // s bits来表示set大小
+</span><span class='line'>-t  / /测试文件</span></code></pre></td></tr></table></div></figure></p>
+
+<p>在测试文件里有4种类型的命令：
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>I 0400d7d4,8    // Instruction load
+</span><span class='line'>M 0421c7f0,4    // Modify, i.e, a data load followed by a data store
+</span><span class='line'>L 04f6b868,8    // a data load
+</span><span class='line'>S 7ff0005c8,8   // a data store</span></code></pre></td></tr></table></div></figure></p>
+
+<p>然后根据命令行指定参数的cache来模拟运行这些指令，给出最终的hit数，miss数和eviction数。替换策略为LRU。</p>
+
+<h2>data structure</h2>
+
+<p>总的来说，无非就是一个2<sup>s</sup>行，E列的数组，数组的元素是一个struct，由<code>is_valide</code>，<code>tag</code>和<code>access_time</code>。下面是我定义的数据结构：</p>
+
+<pre><code class="">struct oneSet
+{
+    int *v;
+    clock_t *last_access_time;
+    long *tag;    
+};
+
+// the global pointer to the cache, setptr[n] stands for the nth set entry
+struct oneSet *setptr;
+</code></pre>
+
+<p>其中oneSet这个struct中的指针都需要根据参数动态分配，所有数组的大小为E。</p>
+
+<h2>Load operation</h2>
+
+<p>如果当前指令是load，那么处理的伪代码伪：
+<code>
+if cache hit:
+    hit++
+else:   //cache miss:
+    if cache is not full:
+        miss++
+    else:   // cache is full
+        miss++
+        evict++
+</code></p>
+
+<h2>Store operation</h2>
+
+<p>如果当前指令是store，那么处理的伪代码伪：
+<code>
+if cache hit:
+    hit++
+else:   //cache miss
+    do a load operation
+</code></p>
+
+<h2>Modify operation</h2>
+
+<p>如果当前指令是Modify，那么处理的伪代码伪：
+<code>
+do a load operation
+do a store operation
+</code>
+如果把上面的逻辑想通了，那么就可以编码了。</p>
+
+<h2>函数设计</h2>
+
+<p>以下是我所有函数的原型：
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// to get the opt from the command line
+</span><span class='line'>void get_opt();&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;// do init work, i.e, malloc space
+</span><span class='line'>void do_init();&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;// do deinit work, i.e, free space
+</span><span class='line'>void do_deinit();&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;// do a load operation
+</span><span class='line'>void do_L(void *addr, int size);&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;// do a modify operation
+</span><span class='line'>void do_M(void *addr, int size);&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;// do a store operation
+</span><span class='line'>void do_S(void *addr, int size);&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;// get set number according to the address of data
+</span><span class='line'>int  getset(void *addr);&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;// get tag number according to the address of data
+</span><span class='line'>long gettag(void *addr);</span></code></pre></td></tr></table></div></figure></p>
+
+<h2>遇到的些问题</h2>
+
+<ol>
+<li><p>替换策略为LRU，所以要记录每个block的最后访问时间，我本来是调用clock()来获取当前cpu时间作为当前时间的，运行后程序出问题，调试发现这个值一直为0。后来查到了原因，是程序运行时间太短cpu时间太小导致精度不够&hellip;表示i7四代太强了。后来用一个long来表示时间解决这个问题。</p></li>
+<li><p>虚拟机不能用mmap。本来一个更方便读测试文件的方法是用mmap把它映射到内存然后直接内存操作，但我的host是mac，在parallel desktop上跑ubuntu，导致了mmap不能正常使用，详细见<a href="http://stackoverflow.com/questions/18420473/invalid-argument-for-read-write-mmap">这里</a></p></li>
+</ol>
+
+
+<h2>源码</h2>
+
+<p>代码放在了<a href="https://github.com/zyearn/csapp-lab-2e/blob/master/cachelab-handout/csim.c">github</a>上。</p>
+]]></content>
+  </entry>
+  
+</feed>

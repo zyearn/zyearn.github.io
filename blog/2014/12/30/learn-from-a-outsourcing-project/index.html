@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>从一个外包项目中学到的 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="最近和一位大神同学做了一个网站外包项目，最近结束了，现在稍微总结一下。后台是用nodejs的express写的（话说express的作者认为express不好，然后又去发起了一个新的开源框架叫koa），对用node做web开发也有了一个地图式的了解。 哪一层解决问题很重要。 举个数据库的例子。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2014/12/30/learn-from-a-outsourcing-project">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">从一个外包项目中学到的</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-12-30T23:36:00+01:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>最近和一位大神同学做了一个网站外包项目，最近结束了，现在稍微总结一下。后台是用nodejs的express写的（话说express的作者认为express不好，然后又去发起了一个新的开源框架叫koa），对用node做web开发也有了一个地图式的了解。</p>
+
+<h3>哪一层解决问题很重要。</h3>
+
+<!-- more -->
+
+
+<p>举个数据库的例子。</p>
+
+<p>学数据库理论都学过外键，简单来说就是一张表一行的某一项数据依赖于另一张表一项的数据。比如说用户信息有一列叫居住地，而居住地又存在另外一张表里，这时候，用户表的居住地就是个外键，指向居住地表的某一行。</p>
+
+<p>那这个有什么用呢？外键提供了不同等级的约束。比如有一个场景，应用层想删除一个地方，但是如果这个地方有人住的话，就要删除失败，否则这个人就没地方住了。如果没有外键，那么解决办法是先select一下用户表，把所有人的居住地找出来，比对一下将要删除的居住地，发现有了，就删除失败，否则就跑去居住地表删数据。这里涉及了两次DB的读取，非常麻烦和不清晰，给应用层加了很多困难。理论上，应用层应该不管这些东西，直接delete，成功了就返回success，失败就返回一个error_code。</p>
+
+<p>外键就可以完美解决这个问题。外键的RESTRICT约束保证了假如有用户表有一行的某个数据指向了居住表的某一行，那这一行就无法被删除。除了RESTRICT约束，还有别的可以选择，比如CASCADE约束，它的意思是如果被引用的数据删了，那么引用它的数据也同样被删掉。在我们的例子里，如果某个居住地被删了，那么住在这个地方的人也都被删了。选择哪种约束完全看场景需求了。</p>
+
+<p>但外键也不是处处能用的，比如在互联网场景下，用户大并发高，外键的存在可能使数据库成为瓶颈。</p>
+
+<p>关于更多外键的实战应用，也可以参考我的小伙伴专门写了一篇<a href="http://zhoutall.com/archives/617">文章</a>。</p>
+
+<p>除了外键，还有个例子。如果一张表的非key列不能重复，可以在应用层用很dirty的方法解决，比如先读一次，如果要插入的数据已经在了，返回错误；否则插入。在DB层可以很好地解决，只要加个unique key就可以了。</p>
+
+<h3>callback hell</h3>
+
+<p>一上手写node，不用第三方库，只要逻辑逻辑稍微复杂一点，就会出现回调里再回调，之后再回调&hellip;代码里有好几层回调。在这个项目中我们首页的展示依赖于很多块数据，而这些数据是不同回调函数的结果，这时候要等全部的数据来了再渲染首页。还有个场景，有n个回调函数，第i-1个回调的输出是第i个回调的输入。在上面两个情况下如果不用第三方库都会给代码编写调试和以后的维护带来极大的困难。</p>
+
+<p>还好，很多node的第三方库解决了这个问题。比如主流的async，then.js，Promise，async用起来最简单，只是在callback上加了语法糖。then.js的链式API更流畅。出于易用性，我们选择了async，用法简单，刚好能解决我们的大部分需求。</p>
+
+<h3>开发最后的20%会花掉80%的时间</h3>
+
+<p>因为这个项目是全程由我和我的小伙伴做的，所以我们要涉及很多除了开发以外的工作，与人的沟通。（上次Bjarne Stroustrup来学校做讲座的时候，他说的一句话让我记忆深刻，他说，在大型软件开发中，最困难的不是技术问题，而是people problem）导致最后20%的工作已经不仅仅是开发工作了，和客户的对齐，再修改等等会花掉大量的时间。所以不要天真地以后代码打完了就结束了，还有大量的非开发工作等着。</p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-12-30T23:36:00+01:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/11/17/visit-server-behind-nat/" title="Previous Post: 如何访问NAT后的server">&laquo; 如何访问NAT后的server</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/02/08/understanding-inheritance-in-javascript/" title="Next Post: 理解Javascript中的继承">理解Javascript中的继承 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2014/12/30/learn-from-a-outsourcing-project/';
+        var disqus_url = 'http://zyearn.com/blog/2014/12/30/learn-from-a-outsourcing-project/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

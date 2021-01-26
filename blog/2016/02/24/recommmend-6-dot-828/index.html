@@ -1,0 +1,253 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>推荐一门课：6.828 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="这篇博文的目的是向大家推荐一门课：MIT的6.828。 这门课主要讲的是操作系统原理与实践，具体分三个部分：lectures，labs and readings。
+Lectures部分会通过介绍xv6来阐述OS原理，并解读xv6源码；
+Labs是这门课的实践部分，课程会提供一个OS的框架， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2016/02/24/recommmend-6-dot-828">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">推荐一门课：6.828</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-02-24T20:19:00+01:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>这篇博文的目的是向大家推荐一门课：MIT的<a href="https://pdos.csail.mit.edu/6.828/2014/index.html">6.828</a>。</p>
+
+<p>这门课主要讲的是操作系统原理与实践，具体分三个部分：lectures，labs and readings。
+Lectures部分会通过介绍xv6来阐述OS原理，并解读xv6源码；
+Labs是这门课的实践部分，课程会提供一个OS的框架，但核心部分全部都是缺失的，需要学生来填写核心代码来实现这个OS；
+Readings部分会阅读一些paper来了解一些更深入、更有意思的topic。</p>
+
+<!-- more -->
+
+
+<p>一个很自然的问题是，它与别的OS课程的区别在哪里？
+最大的一个区别是，这门课的实践部分比重非常非常大，而OS本身就是一个实践学科，所以6.828的编程练习会让你对OS的概念非常清楚。
+具体来说，这门课一共有7个lab，写完这7个lab，一个操作系统就被写出来了（名字叫JOS，是专门为这门课设计的Exokernel，麻雀虽小五脏俱全），除此之外，老师们为了让学生了解不同OS的架构和风格，在讲课阶段会主要以xv6（一个教学的操作系统，它是Monolithic kernel）的代码讲解OS概念，也就是说，在学期末，你会自己编写一个Exokernel和完整阅读一个Monolithic kernel的代码。</p>
+
+<p>虽然我本科阶段也上过OS，但大作业的量完全没有到达这个编码强度（当时交大的OS课大作业是编写一个toy文件系统），导致自己以前对很多OS的概念和实现细节都是只见树木不见森林。然后从去年12月初，一共用了三个月的时间把这门课刷完了，对OS的理解清楚了很多，以及本科学的很多知识点都串了起来。</p>
+
+<p>基于这个原因，不管你是学生还是已经工作几年的前辈，如果你想了解一个小型OS具体到代码是如何实现的，这门课是首选。</p>
+
+<p>介绍一下每个Lab的需要做的事情：</p>
+
+<ul>
+<li><p>Lab1是熟悉的过程，需要学习QEMU模拟器的使用、开机启动流程、调试工具、bootloader、以及整个加载kernel的流程。做完这个lab会具备基本的内核调试能力，以及掌握开机到通电，bootloader是如何加载kernel的。</p></li>
+<li><p>Lab2要完成JOS的的内存管理模块，需要学习一些计算机基础知识，如虚拟地址系统是如何工作的，地址空间是如何切分的，物理页面是如何管理的。做完这个lab将会给JOS添加最基本的内存管理功能，即Kernel其余模块需要物理页，这个模块可以分配出来。</p></li>
+<li><p>Lab3为JOS添加进程的支持、异常/中断的支持、系统调用和页中断的支持。这个lab内容比较多，但收获也比较大，做完后会对从用户态陷入内核态，执行系统调用，然后返回这整个流程都非常清楚（不是泛泛的清楚，而是代码级别的清楚，这是和学概念不同的地方）。</p></li>
+<li><p>Lab4为JOS添加多核支持、RR调度、COW的fork、抢占式内核、时钟中断和最基本的IPC机制。做完Lab3和Lab4，一个能用的OS已经出来了，但用途非常有限，因为没有文件系统和网络的支持，Lab5和Lab6就会做这两件事情。</p></li>
+<li><p>Lab5为JOS添加基于Disk的文件系统、块缓存、实现键盘中断、修改一个shell支持最基本的功能。完成这个Lab后就可以在shell里面输入命令以及文件系统的支持了。JOS没有实现crash recovery，在xv6用log的方式实现了crash recovery，代码都非常好（虽然效率很差&hellip;课里会讲）。</p></li>
+<li><p>Lab6为JOS添加网络的支持。网络部分主要分两个大块，一个是协议栈的编写，一个是驱动的编写。协议栈太复杂了，于是课程提供了现有的lwip库。我们需要实现驱动，这涉及到阅读intel的网卡硬件手册，这是本课程让人头痛的地方之一。完成驱动以后，需要完成用户态的network server（网络服务以用户进程的形式提供是Exokernel的特点之一，和Microkernel很像），还需要完成一个用户态的web server，完成之后经过QEMU的端口转发，在host机器可以访问qemu里面运行虚拟机的web server！第一次运行成功也是觉得非常神奇，因为OS从上到下，在此时此刻，全部打通了，可以向外提供服务了，并且这个OS的核心代码全部是在课程里完成的。</p></li>
+<li><p>Lab7和Lab6只需要选择一个做，Lab7是一个需要组队的开放式课题。</p></li>
+</ul>
+
+
+<p>不可否认的是有些lab真的非常让人头痛、一个bug可能会调很久甚至几天没有进展，但到最后收获的远多于付出。</p>
+
+<p>如果你对上面的Lab有兴趣，那花三个月去上一下这门课会非常值。其实可能用不上三个月，我是跟着课程进度一点点做的，如果有一点OS基础可以直接做Lab，稍微加班加点一个月左右也可以完成了。</p>
+
+<p>JOS还有很大的提升空间，归根结底这只一个“working”OS，离工业级使用还差很多，以下是我总结的一些改进点：</p>
+
+<ol>
+<li><p>JOS和xv6的内存管理方式都是空闲链表，这导致如果内核想要连续的物理内存，将十分困难（因为碎片的存在，即使没有碎片，也将是O(n)的复杂度），所以linux采用了buddy system来解决碎片问题。（至于内核为什么需要连续的物理内存，请看我在V2EX上问网友的一个<a href="http://v2ex.com/t/256450">问题</a>）</p></li>
+<li><p>JOS和xv6的进程调度是最简单的RR方式，这使得它们无法应用在某些特殊的场景下，而且父进程很容易fork子进程把CPU时间全抢了。</p></li>
+<li><p>JOS和xv6根本就没有磁盘调度算法，应用层来一个读写磁盘请求就直接由驱动发送给磁盘控制器。</p></li>
+<li><p>JOS的文件系统效率差，且不支持crash recovery，即使是实现了crash recovery的xv6，效率也非常差。不过在文件系统设计中，performance（don&rsquo;t write the disk）和safety（write the disk ASAP）本身就是一个tradeoff。</p></li>
+<li><p>&hellip;</p></li>
+</ol>
+
+
+<p>上完这门课后推荐看一下Rober Love的《Linux内核设计与实现》，会发现JOS到底哪里做得不好以及Linux是如何解决的。</p>
+
+<p>附：Lab的<a href="https://github.com/zyearn/6.828-labs">代码地址</a>和上这门课时的一些<a href="https://github.com/zyearn/6.828-labs/blob/lab6/LabNotes">笔记</a></p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-02-24T20:19:00+01:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/12/02/eleme-hackathon/" title="Previous Post: 参加饿了么编程马拉松感">&laquo; 参加饿了么编程马拉松感</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/03/06/cs-courses-and-abstraction/" title="Next Post: 抽象与计算机课程">抽象与计算机课程 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2016/02/24/recommmend-6-dot-828/';
+        var disqus_url = 'http://zyearn.com/blog/2016/02/24/recommmend-6-dot-828/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

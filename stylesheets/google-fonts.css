@@ -1,0 +1,12 @@
+@font-face {
+  font-family: 'Frijole';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Frijole'), url(/stylesheets/Frijole-Regular.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Open Sans'), local('OpenSans'), url(/stylesheets/OpenSans-Regular.ttf) format('truetype');
+}

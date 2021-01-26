@@ -1,0 +1,290 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>如何用C/C++写一个基于事件的爬虫 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="在去年三月份的时候，写过一篇文章，讲了一下如何写一个知乎爬虫，爬下最高票的答案，并且把代码放到了github。在这一年多的时间里，前前后后有很多人来问我关于这个爬虫的一些实现细节，在回答他们的同时发现自己原来的代码真是写得太烂了，最近正好有空，把代码和架构都重写了一下，不能再误人子弟了。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">如何用C/C++写一个基于事件的爬虫</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-09T20:52:00+02:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>在去年三月份的时候，写过一篇<a href="http://zyearn.github.io/blog/2014/03/08/zhihu-spider/">文章</a>，讲了一下如何写一个知乎爬虫，爬下最高票的答案，并且把代码放到了<a href="https://github.com/zyearn/zhihuCrawler">github</a>。在这一年多的时间里，前前后后有很多人来问我关于这个爬虫的一些实现细节，在回答他们的同时发现自己原来的代码真是写得太烂了，最近正好有空，把代码和架构都重写了一下，不能再误人子弟了。</p>
+
+<!-- more -->
+
+
+<p>所以有了这篇文章，记录下自己的一些改进，以及尽可能说清楚如何用C++实现一个高性能爬虫。</p>
+
+<h2>为什么要用C++写</h2>
+
+<p>在继续往下看之前一定要先想清楚一个问题，现在用Python或者NodeJS可以非常快速地开发出一个爬虫，库齐全，开发成本非常低，那为什么还要用C来写爬虫？答案是这要看你的目的。如果你单纯是为了完成一个数据抓取的任务，当然是任务完成得越快越好，以后代码越好修改越好，首选就是那些库齐全的动态语言，但如果你的目的是为了理解底层系统，理解抓取数据的每一个环节，那么我的推荐是用C++写吧，并且所有轮子都自己造。我的目的是后者，所以选择了用C来写。既然所有轮子都自己造了，那这篇文章应该叫，如何不用任何第三方库，只用C/C++内建函数来完成一个网络爬虫。</p>
+
+<p>用Python写会是什么样子？有Requests库来封装HTTP请求，有BeautifulSoup来解析HTML，大大减少了开发难度，你只需要知道爬虫的一般流程，很容易写出一个能跑的代码，用NodeJS也是一样的。</p>
+
+<h2>知乎爬虫原理</h2>
+
+<p>如果有读者不太清楚爬虫的原理，请先看一下这篇<a href="http://www.zhihu.com/question/20899988">入门文章</a>。</p>
+
+<p>接下来简单说一个我的zhihu爬虫的原理，因为我的目标是爬下最高赞/最高关注这些类型的答案和问题，所以从用户主页出发是最好不过的，比如从用户主页点击“回答”，就可以看到用户的所有回答，然后抓下来，点击“提问”，就可以看到用户所有的提问。把所有用户的所有回答/提问都抓下来然后根据点赞数/关注数排序，就是我想要的结果。那所有用户怎么得到？从一个用户出发（即队列中的初始URL），把TA的所有关注的人和关注者都爬下来，不重复地放入URL队列中，等到当前用户处理完，再从URL队列里拿下一个用户，如此循环即可。</p>
+
+<p>仔细想想，这个方法会有一个问题，如果一个人即不关注别人也不被别人关注，且不在初始URL队列中，那么这个用户的回答和提问永远不会被抓到。更一般的结论是，如果有用户群构成“孤岛”，那么这些用户群都不会被爬虫访问。举个例子，A、B互相关注，C、D互相关注，如果我们将A放入初始URL队列，那么爬虫只可能抓下A、B的数据，因为C、D构成了“孤岛”，怎么解决这个问题？</p>
+
+<p>再想想，这个问题真的有必要解决吗？这个问题会对我们造成困扰的情况是，一个大V答了一个赞数很高的问题，但是TA竟然在某座“孤岛”上，如果我们称大部分人所构成的连通图叫主图，那么这个大V构成的“孤岛”和主图上的人一点关系都没有，即不被关注也不关注别人，这几乎是不可能的事情，所以这个问题不需要解决。</p>
+
+<h2>如何用C++写爬虫</h2>
+
+<p>无论用Python或者C++写爬虫，底层都是一样的，都是和server建立若干个TCP连接，然后把HTTP请求写入这个TCP socket中，等待server的数据返回。为了高效处理I/O，在linux平台下需要用epoll（别的平台请用各自的机制）。</p>
+
+<p>所以一个C++爬虫步骤大概是这样的，本质上就是一个事件循环（event loop）：</p>
+
+<ol>
+<li><p>初始化epoll，并和server建立TCP连接</p></li>
+<li><p>从URL队列中拿出url，并准备好http请求</p></li>
+<li><p>将http请求写入到这个TCP socket中，并把这个socket加入epoll中</p></li>
+<li><p>检查活动事件（epoll_wait）</p></li>
+<li><p>处理事件，读取HTML，解析HTML，处理HTML，然后把相关未处理过的URL放入URL队列中</p></li>
+<li><p>回到第2步</p></li>
+</ol>
+
+
+<h2>原来的代码结构</h2>
+
+<p>先简单描述一下去年写的爬虫代码是怎么误人子弟的。</p>
+
+<p>程序从队列里拿到一个URL后，需要去下载这个URL的页面，解析出我需要的数据，然后把它的下一层URL加入队列中。原来的爬虫代码就老老实实地实现了这个步骤，阻塞地等待页面下载完成，再去处理这个页面。其实这是很低效的，因为阻塞的这段时期我们什么都干不了，浪费了带宽。为什么不把队列里的其它URL请求一起发出去呢，然后有数据来了我就处理。这就是为什么爬虫为什么要用基于事件来写的原因。</p>
+
+<p>这里需要理解爬虫这种程序的本质，它是网络I/O密集程序，不是CPU密集，而处理I/O密集最高效的做法就是事件循环。</p>
+
+<p>所以我做的一个做大的改善就是把原来的阻塞爬虫改成了基于事件的爬虫，它得到的好处是可以完全把带宽跑满，爬取速度最大化。</p>
+
+<p>除此之外，还有一个改善是把多线程模型改成了单进程模型。有同学可能会产生疑惑，难道利用多核还会比单核性能差？我们从以下两点来分析：</p>
+
+<ol>
+<li><p>根据amdahl定律，对系统中一个模块的加速，不仅取决于加速比，还取决于这个模块在原来系统中占的比例。爬虫是I/O密集程序，绝大部分时间都花在了网络I/O上，CPU大部分时间是空闲的，所以提高CPU的利用率其实效果很小。</p></li>
+<li><p>多线程会引入额外的开销，最大的开销可能就是锁了。比如你要把新的URL加入队列，这时候在多线程环境下肯定要对队列加锁。</p></li>
+</ol>
+
+
+<p>那么问题就是，第一点所带来的性能提升和第二点所带来的开销，哪个更大一点？如果第二点大，我们果断要换成单进程。答案是看环境，我们极端点看，如果你的带宽无穷大，网络情况无穷好，那么请求一发出去立刻就回复了，这个网络I/O密集程序硬生生变成了CPU密集，多线程会好；如果你的带宽无穷小，那么锁带来的开销会占比更大，一个任务来了多线程之间还要竞争一下，单线程就直接处理了且没有锁的性能开销，用单线程会好。我们需要在不同的环境下选择最好的办法，不过一般来说，现实中最大的时间开销一定在网络I/O。</p>
+
+<h2>用C++实现爬虫时的难点</h2>
+
+<ol>
+<li><p>从TCP socket读取数据到把完整的HTML数据交付上层需要一个数据层，因为如果调用read返回<a href="http://stackoverflow.com/questions/4058368/what-does-eagain-mean">EAGAIN</a>时，这时是不知道到底有没有接受到完整的HTML，需要保存好当前读到的网页内容，并通过一个状态机来解析当前收到的数据，保存当前的状态，如果解析完成（读到全部数据了）就返回SUCCESS，否则就就返回ERROR，等待下一次数据来临，继续解析状态机。用动态语言不需要考虑这一点，会直接传递给用户层完整的数据。</p></li>
+<li><p>请求得太快，知乎会返回429错误（即提示客户请求太多，稍后再试），这个问题怎么解决？乖乖地等待一段时间再去抓是一种浪费带宽的行为。服务器判断请求太多是看这个IP在一段时间的请求数太多了，如果我们IP分散为N个不同IP，那就解决这个问题了。这个方案叫动态IP或者代理IP。那么多IP意味着要花很多的钱，如果不愿意花钱，还是乖乖等一段时间再发请求吧。</p></li>
+<li><p>爬虫里一个需求，要获得一个用户的所有关注的人和关注者，但这些东西都是通过ajax获取的，所以要写一个post请求来模拟ajax。其中post data里有一个hash_id和_xsrf，这两个值都在哪里可以获得？后来在该用户的主页的HTML里找到了这两个值。</p></li>
+<li><p>怎么用C++解析HTML？比如上面一点提到的，我要找到这个页面里的hash_id，它可能是某个HTML元素的属性，怎么得到这个属性值？用过JQuery的同学这时会想，如果C++里面也有一个像JQuery那么好用的库该多好，直接写个选择器就获得属性的值了。我简单地调研了一下，C++还是有这样的库的。基于学习的目的，最好自己写一个这样的库，所以，问题来了，怎么实现一个HTML parser？或者更简单的，怎么实现一个正则匹配？</p></li>
+<li><p>如何管理一个请求的周期，因为一个请求的周期中，状态太多了。为什么状态多，因为一个请求会涉及很多异步操作，首先获取该用户的答案页面，这时候要等待server的回复，处理完以后获得改用户所有关注的人和关注者的页面，也要等待server的回复，再把这些所有用户加入队列后，这个请求周期才算结束。</p></li>
+<li><p>需要自己处理一些HTTP header的细节。比如不希望接受到HTTP response header里Transfer Encoding: chuncked回复，因为它显然没有Content-length直接获取到数据长度来得方便，该怎么办？再比如不希望接受到gzip处理过的数据，希望收到plain text，又该怎么办？</p></li>
+<li><p>架构怎么设计。首先最底层是TCP层，上层应该封装一个数据接收层，再上层应该是HTML解析层，最后是事件循环层。这些层次/模块怎么做到耦合度最低？</p></li>
+<li><p>网络异常怎么处理，比如read返回error（eg  Connection reset by peer），或者EOF。EOF需要重新建立一个新的连接，然后继续前一个请求（或者说继续状态机）。</p></li>
+</ol>
+
+
+<h2>用C++相比Python，NodeJS的优点</h2>
+
+<ol>
+<li><p>系统的掌控性。比如我们希望TCP连接数要控制在1000，完全可能很容易地实现。并且可以知道哪里会耗内存、CPU，底层在发生什么我们更容易知道。比如，在HTTP request header里写上<code>Connection: keep-alive</code>可以让很多请求复用一个TCP连接，在用C++实现的时候，对应的实现方法很简单粗暴：从socket读完对方服务器发来的response后，再构造一个header发过去即可。</p></li>
+<li><p>因为一些内建库的缺乏，并且出发点是学习，我们会重新造一些轮子，与此同时，提高了编程能力。
+比如说读配置文件，格式是json，可以自己用C写个json parser。再比如上文提到的HTML parser，也可以用C写一个，还有基于epoll的事件循环，可以抽象成一个通用的网络库。有太多轮子可以造，要把其中任意一个轮子写好都是非常难的事情。</p></li>
+<li><p>高性能。可能由于网络的大延迟使得这个优点不那么明显。</p></li>
+</ol>
+
+
+<h2>总结</h2>
+
+<p>本文基于我一年多之前写的zhihu爬虫以及最近的大规模改进，总结了如何用C++编写的高效、基于事件驱动的知乎爬虫，同时也列出了用C++写爬虫时的一些难点与收获。</p>
+
+<p>如果你有兴趣看看竟然有人用C++写了一个爬虫究竟是什么样子的，代码在<a href="https://github.com/zyearn/zhihuCrawler">这里</a>。</p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-09T20:52:00+02:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/05/16/how-to-write-a-server/" title="Previous Post: 如何写一个Web服务器">&laquo; 如何写一个Web服务器</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/12/02/eleme-hackathon/" title="Next Post: 参加饿了么编程马拉松感">参加饿了么编程马拉松感 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c/';
+        var disqus_url = 'http://zyearn.com/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>CSAPP: Shell Lab - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="这个实验要求我们写一个简单的shell，能够执行一些内置的命令和系统提供的程序，比如echo和ps，这里是详细的要求。这个shell需要提供最基础的功能，前台执行程序，后台执行程序，能从terminal接受SIGINT(ctrl+c)信号和SIGTSTP(ctrl+z)信号来终止和停止程序。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2014/02/18/csapp-shell-lab">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">CSAPP: Shell Lab</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-18T15:46:00+01:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>这个实验要求我们写一个简单的shell，能够执行一些内置的命令和系统提供的程序，比如echo和ps，这里是详细的<a href="http://csapp.cs.cmu.edu/public/shlab.pdf" target="_blank">要求</a>。这个shell需要提供最基础的功能，前台执行程序，后台执行程序，能从terminal接受SIGINT(ctrl+c)信号和SIGTSTP(ctrl+z)信号来终止和停止程序。</p>
+
+<p>整体框架是这样的：从stdin读入用户命令，然后parse这个命令，如果是内置命令(比如quit，退出shell的命令)，则立刻执行，否则<code>fork</code>一个子进程，用<code>execve</code>把子进程的地址空间替换为相应的程序。另外为了支持用户发送信号给shell，还需要写3个信号处理程序，分为处理SIGCHLD, SIGINT和SIGTSTP。</p>
+
+<!-- more -->
+
+
+<p>这个lab里不要求我们写管道的功能，比如<code>ls | grep "abc"</code>，如果要写的话也比较方便，用pipe就可以实现，有兴趣的同学可以自己实现，这里需要注意每个进程一定把不用的file descriptor关闭掉。原因是在<code>fork</code>之前要初始化管道，于是父子进程的管道descripor指向的file table的<code>ref count</code>是2，如果父子进程不关闭它不需要的读写描述符，那么资源不回收是小事，更要命的是子进程可能会一直读不到管道EOF然后一直等待管道另一方的输入。</p>
+
+<h2>需要注意的一些东西：</h2>
+
+<ol>
+<li><p>需要修改子进程的进程组ID。原因是，fork出来的子进程和父进程的进程组ID是相同的，所以启动我们的shell后按ctrl+c发送SIGINT信号给shell，会同时发给shell和shell的子进程，包括后台进程，然后这个进程组的进程都将会被关闭。这显然不是正确的，我们的预期是只发给shell，然后由信号的handler来处理这个信号（如果有前台进程，那么发送SIGINT给这个进程组；否则就什么都不做）。所以在<code>fork</code>之后<code>execve</code>之前需要调用<code>setpgid(0, 0)</code>，这个函数把当前进程的进程组id设置为当前进程的进程号。</p></li>
+<li><p>当shell接收到用户发来的SIGINT或SIGTSTP时，shell需要将这个信号转发相关的进程组，而不是单个进程，所以在用kill函数的时候第一个参数是<code>-pid</code>。</p></li>
+<li><p>在fork之前，主进程需要先用<code>sigprocmask</code>函数来block信号SIGCHLD，然后再unblock，这样做的目的是防止<code>addjob</code>和<code>deletejob</code>乱序执行。在某种调度顺序下，子进程先完成任务，发送SIGCHLD给父进程，父进程于是执行handler来处理，其中需要调用<code>deletejob</code>，这个时候<code>addjob</code>可能没有执行。注意在子进程也要unblock这个信号。</p></li>
+<li><p>程序需要处理别的程序给子进程发送信号的情况，此时的shell需要正确处理。比如，子进程自己给自己发送了一个SIGTSTP，然后kernel会给shell发送一个SIGCHLD（子进程终止或停止，kernel都会给父进程发送SIGCHLD），shell需要正确地输出相关信息到标准输出。</p></li>
+</ol>
+
+
+<h2>拓展</h2>
+
+<p>这个shell功能非常基础，接下来为它提供一些高级功能，这些高级功能会更新到我的第三版实现中。</p>
+
+<ol>
+<li><p>管道。虽然上面说了管道实现起来比较容易，其实实际实现起来还是有很多值得讨论的地方，比如多级管道怎么实现呢？我认为一个比较好的实现方法是实现一个自顶向下的parser，输出一个语法树，递归地对它进行处理即可。</p></li>
+<li><p>重定向。这个比较简单，只要打开文件，dup文件描述符到标准输出或标准输入即可。</p></li>
+</ol>
+
+
+<h2>源码</h2>
+
+<p>这个lab我分别为第二版和第三版做了两次，第二版的代码在<a href="https://github.com/zyearn/csapp-lab-2e/tree/master/shlab-handout">这里</a>，第三版的代码在<a href="https://github.com/zyearn/csapp-lab-3e/tree/master/shlab-handout">这里</a>。</p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-02-18T15:46:00+01:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/computersystem/'>computersystem</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/02/16/csapp-cache-lab/" title="Previous Post: CSAPP: Cache Lab">&laquo; CSAPP: Cache Lab</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/02/21/csapp-proxy-lab/" title="Next Post: CSAPP: how to write a Web Proxy">CSAPP: how to write a Web Proxy &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2014/02/18/csapp-shell-lab/';
+        var disqus_url = 'http://zyearn.com/blog/2014/02/18/csapp-shell-lab/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

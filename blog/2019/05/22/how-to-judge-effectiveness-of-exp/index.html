@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>ABtest数学原理 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="问题 假设现在有一个新的点击注册文案，想要测试它的效果，实验人员将实验分为对照组和实验组，给对照组看原来的文案，而给实验组看新的文档。实验结果是，对照组中的14500人中有1450人注册点击，而在实验组的14500人中有1600人点击注册，如何通过实验数据来判定新的文案是否优于老的文案？ &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2019/05/22/how-to-judge-effectiveness-of-exp">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">ABtest数学原理</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-05-22T14:19:00+02:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <h2>问题</h2>
+
+<p>假设现在有一个新的点击注册文案，想要测试它的效果，实验人员将实验分为对照组和实验组，给对照组看原来的文案，而给实验组看新的文档。实验结果是，对照组中的14500人中有1450人注册点击，而在实验组的14500人中有1600人点击注册，如何通过实验数据来判定新的文案是否优于老的文案？</p>
+
+<p>主要看两个指标：第一个是实验是否统计显著（statistically significant）；第二个是统计功效（statistical power）是否满足。</p>
+
+<h2>统计显著</h2>
+
+<p>首先看实验是否统计显著，即pvalue是否小于显著性水平，使用的方法是假设检验。具体方法是当零假设（两个版本没有区别）成立时，算出得到观测数据的概率pvalue，如果这个概率小于显著性水平，则拒绝零假设，实验结果显著。pvalue具体计算方式如下：
+假设p1,p2为两个版本的总体点击率，对控制组的样本均值设为X1bar，实验组的样本均值为X2bar，根据中心极限定理，X1bar和X2bar均满足正态分布。根据<a href="https://en.wikipedia.org/wiki/Sum_of_normally_distributed_random_variables">两个独立正态分布变量之和依旧是正态分布</a>，X1bvar-X2bar也满足正态分布。于是有
+<img src="/images/distri.png" alt="avatar" /></p>
+
+<p>然后建立零假设p1-p2=0，并计算z-score，如果z-score大于显著性水平所在的临界值，那么就拒绝原假设，即p1不等于p2。这里需要注意的是，就算拒绝了原假设，它也是有概率成立的，只是这个概率太小，一般显著性水平alpha设置在0.05，那么只能说95%的概率原假设是不成立的。如果pvalue小于alpha，但是真实结果是p1等于p2，这类错误叫做第一类错误，让alpha的值较小可以降低这类错误的发生。</p>
+
+<h2>统计功效</h2>
+
+<p>第二个指标是统计功效。需要让这个指标达标，样本数量需要满足一定的要求。在实验开始前，先计算每个实验的分流数，让实验经过那么多流量后，该实验的统计功效才能得到满足，分流数的计算方法为(来自<a href="http://www.evanmiller.org/ab-testing/sample-size.html">http://www.evanmiller.org/ab-testing/sample-size.html</a>)</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">function</span> <span class="nx">num_subjects</span><span class="p">(</span><span class="nx">alpha</span><span class="p">,</span> <span class="nx">power_level</span><span class="p">,</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">delta</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="nx">p</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">p</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="nx">p</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">t_alpha2</span> <span class="o">=</span> <span class="nx">ppnd</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="nx">alpha</span><span class="o">/</span><span class="mi">2</span><span class="p">);</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">t_beta</span> <span class="o">=</span> <span class="nx">ppnd</span><span class="p">(</span><span class="nx">power_level</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">sd1</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nx">p</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">p</span><span class="p">));</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">sd2</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="nx">p</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">p</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="nx">p</span> <span class="o">+</span> <span class="nx">delta</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">p</span> <span class="o">-</span> <span class="nx">delta</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="nx">t_alpha2</span> <span class="o">*</span> <span class="nx">sd1</span> <span class="o">+</span> <span class="nx">t_beta</span> <span class="o">*</span> <span class="nx">sd2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="nx">t_alpha2</span> <span class="o">*</span> <span class="nx">sd1</span> <span class="o">+</span> <span class="nx">t_beta</span> <span class="o">*</span> <span class="nx">sd2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="nx">delta</span> <span class="o">*</span> <span class="nx">delta</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其中alpha为显著性水平，power_level是功效值，p是控制组基准值，delta为实验的最小差异。当实验经过那么多流量后，如果统计显著，那么该实验就是可信的；如果统计不显著，我们要确保这两个版本确实没有足够大的差异，即接受零假设p1=p2，此时会发生的一种情况是，p1不等于p2，只是这次实验中，p1-p2的值刚好落在假设检验的接受域中，这类错误称为第二类错误（接受了错误的原假设）。为了让第二类错误足够少，可以让p1-p2这个正态分布足够窄，那么落在Z_alpha之内的值的概率就足够小，此类情况的概率就足够小。</p>
+
+<p>在以上两种指标都达标时，当实验结果显著时，它大概率就是显著的（显著性水平保证了第一类错误小于5%）；当实验结果不显著时，它大概率就是不显著的（统计功效保证了对这个不显著的结果有多大的信心）。</p>
+
+<p>实验组和控制组还可以计算置信区间，表示总体参数的范围。置信区间有两种解释方式。
+第一种是计算一个结果本身的置信区间，比如Click/Impression=10/10000，那么它的置信区间为0.001±sqrt(0.1*0.9 / 10000)
+第二种是计算某组相对控制组的提升百分比置信区间，我们采取这种方式展示。</p>
+
+<p>不仅要看最终是否显著，还需要看趋势：试想有一个改进在白天可以提升100%，而在夜晚下降了20%，如果只看最终的结果，那么一定是显著的，但是通过看趋势我们完全可以看到晚上的异常值，从而更细粒度地发现问题。</p>
+
+<h2>实验方法论</h2>
+
+<ul>
+<li>根据alpha、power_level、p、delta计算出实验最小分流数（若知道pv，则可以算出实验时间），这个计算需要用户自行用工具计算（很多在线工具）</li>
+<li>设置实验参数、上线实验</li>
+<li>实验期间观察关键指标的变化趋势，看是否有大起大落等异常现象</li>
+<li>经历了最小分流数后，实验结束，看实验是否显著（pvalue小于显著性水平）。如果显著，则较有信心改进版会有提升；若不显著，则改进版可能真的没什么效果</li>
+<li>置信区间表明了上线后提升的范围</li>
+</ul>
+
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2019-05-22T14:19:00+02:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/algorithms/'>algorithms</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2018/02/12/2017-summary/" title="Previous Post: 2017工作小感">&laquo; 2017工作小感</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2019/07/13/how-to-be-confident/" title="Next Post: 心理学阅读（一）">心理学阅读（一） &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2019/05/22/how-to-judge-effectiveness-of-exp/';
+        var disqus_url = 'http://zyearn.com/blog/2019/05/22/how-to-judge-effectiveness-of-exp/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

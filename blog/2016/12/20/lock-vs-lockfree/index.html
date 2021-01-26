@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>无锁是万能药吗 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="经常会听到有人这样说，把某个地方的锁换成了无锁（lockfree）以后，性能提高了多少多少倍。
+不禁会让人产生疑问：是不是只要有锁的地方，换成lockfree后都可以提高性能呢？ 答案是具体情况需具体分析。 一部分朋友觉得用锁会影响性能，其实锁指令本身很简单，影响性能的是锁争用（Lock &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2016/12/20/lock-vs-lockfree">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">无锁是万能药吗</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-12-20T21:17:00+01:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>经常会听到有人这样说，把某个地方的锁换成了无锁（lockfree）以后，性能提高了多少多少倍。
+不禁会让人产生疑问：是不是只要有锁的地方，换成lockfree后都可以提高性能呢？</p>
+
+<p>答案是具体情况需具体分析。</p>
+
+<p>一部分朋友觉得用锁会影响性能，其实锁指令本身很简单，影响性能的是锁争用（Lock Contention<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>），导致scalability非常差<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>。什么叫锁争用，就是两个线程都想进入临界区，但只能有一个线程能进去，这样就影响了并发度。有兴趣的朋友可以去看看glibc中pthread_mutex_lock的源码实现，在没有contention的时候，就是一条CAS指令，内核都没有陷入；在contention发生的时候，选择陷入内核然后睡觉，等待某个线程unlock后唤醒（详见<a href="https://en.wikipedia.org/wiki/Futex">Futex</a>）。</p>
+
+<p>“只有一个线程在临界区”这件事对lockfree也是成立的，只不过所有线程都可以进临界区，最后只有一个线程可以make progress，其它线程再做一遍。</p>
+
+<p>所以contention在有锁和无锁编程中都是存在的，那为什么无锁有些时候会比有锁更快？他们的不同体现在拿不到锁的态度：有锁的情况就是睡觉，无锁的情况就不断spin。睡觉这个动作会陷入内核，发生context switch，这个是有开销的，但是这个开销能有多大<sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup>呢，当你的临界区很小的时候，这个开销的比重就非常大。这也是为什么临界区很小的时候，换成lockfree性能通常会提高很多的原因。</p>
+
+<p>再来看lockfree的spin<sup id="fnref:4"><a href="#fn:4" rel="footnote">4</a></sup>，一般都遵循一个固定的格式：先把一个不变的值X存到某个局部变量A里，然后做一些计算，计算/生成一个新的对象，然后做一个CAS操作，判断A和X还是不是相等的，如果是，那么这次CAS就算成功了，否则再来一遍。如果上面这个loop里面“计算/生成一个新的对象”非常耗时并且contention很严重，那么lockfree性能有时会比mutex差。另外lockfree不断地spin引起的CPU同步cacheline的开销也比mutex版本的大。</p>
+
+<p>lockfree的意义不在于绝对的高性能，它比mutex的优点是使用lockfree可以避免死锁/活锁，优先级翻转等问题。但是因为ABA problem、memory order<sup id="fnref:5"><a href="#fn:5" rel="footnote">5</a></sup>等问题，使得lockfree比mutex难实现得多。</p>
+
+<p>除非性能瓶颈已经确定，否则还是乖乖用mutex+condvar，等到以后出bug了就知道mutex的好了。如果一定要换lockfree，请一定要先profile，profile，profile！确保时间花在刀刃上。</p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>http://preshing.com/20111118/locks-arent-slow-lock-contention-is/<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>A classic paper on how different locking alternatives do and don’t scale: “The Performance of Spin Lock Alternatives for Shared-Memory Multiprocessors”<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+<li id="fn:3">
+<p>context switch的开销不仅仅是push和pop寄存器，它还引发了cache、TLB、branch predictor等CPU状态的丢失，具体如何测量CS的值，请参考“lmbench: Portable tools for performance analysis”<a href="#fnref:3" rev="footnote">&#8617;</a></p></li>
+<li id="fn:4">
+<p>有同学问无锁和自旋锁有什么区别，不都是在一个循环里spin吗？自旋锁的本质还是应用层的锁，当一个线程持有锁后，被调度出去了，其它线程还是无法继续，而lockfree不是这样的，它可以保证至少一个线程make progress<a href="#fnref:4" rev="footnote">&#8617;</a></p></li>
+<li id="fn:5">
+<p>关于memory order，这是个不错的入门资料：http://www.chongh.wiki/categories/High-performance/<a href="#fnref:5" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-12-20T21:17:00+01:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/04/30/speech-in-my-high-school/" title="Previous Post: 回高中母校的演讲">&laquo; 回高中母校的演讲</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2017/01/07/how-to-generate-uniform-distribution/" title="Next Post: 如何生成[0, N)中的随机数">如何生成[0, N)中的随机数 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2016/12/20/lock-vs-lockfree/';
+        var disqus_url = 'http://zyearn.com/blog/2016/12/20/lock-vs-lockfree/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

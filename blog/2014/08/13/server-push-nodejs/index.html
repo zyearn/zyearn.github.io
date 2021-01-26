@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>服务器推送技术 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="服务器推送技术在现时代的网站中越来越流行，比如说，在你刷着微博的时候，有好友私信你，这时候后台的消息会实时推送到前台，在不刷新页面的前提下提示用户这条消息，显然这条消息是被“推”到客户端的，那么这个是怎么实现的呢？ 推送技术 一般的服务器Push技术包括： 基于 AJAX 的长轮询（long- &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2014/08/13/server-push-nodejs">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">服务器推送技术</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-08-13T23:06:00+02:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>服务器推送技术在现时代的网站中越来越流行，比如说，在你刷着微博的时候，有好友私信你，这时候后台的消息会实时推送到前台，在不刷新页面的前提下提示用户这条消息，显然这条消息是被“推”到客户端的，那么这个是怎么实现的呢？</p>
+
+<!-- more -->
+
+
+<h2>推送技术</h2>
+
+<p>一般的服务器Push技术包括：</p>
+
+<ol>
+<li><p>基于 AJAX 的长轮询（long-polling）方式，服务器Hold一段时间后再返回信息，然后前端再往后端发起请求，以此往复</p></li>
+<li><p>HTTP Streaming，通过iframe和script标签完成数据的传输，这种方法近来已经很少被使用</p></li>
+<li><p>TCP 长连接</p></li>
+<li><p>HTML5新引入的WebSocket，可以实现服务器主动发送数据至网页端，它和HTTP一样，是一个基于HTTP的应用层协议，跑的是TCP，所以本质上还是个长连接，双向通信，意味着服务器端和客户端可以同时发送并响应请求，而不再像HTTP的请求和响应</p></li>
+</ol>
+
+
+<p>上述的1和2统称为comet技术，这里有个简单的介绍：<a href="http://www.ibm.com/developerworks/cn/web/wa-lo-comet/">Comet：基于 HTTP 长连接的“服务器推”技术</a></p>
+
+<h2>socket.io</h2>
+
+<p>前些日子由于项目网站的需求，后台会产生一些提示用户的警告消息，为了实现在用户正常浏览网页的前提下，后台通知实时推送到前端显示。</p>
+
+<p>综合调研下来，发现是nodejs的socket.io比较成熟地解决了这件事情。它是一个实时通信的框架，天生就是为了服务器端和客户端的双向通信。在它的<a href="http://socket.io/">官网</a>上，提供了一些最简单的应用，其中一个就是多人在线聊天室，用socket.io实现的代码逻辑非常清楚。</p>
+
+<p>socket.io是WebSocket的一个开源实现，对不支持websocket的浏览器降级成comet / ajax轮询，socket.io的良好封装使代码编写非常容易。</p>
+
+<h2>socket.io的部署</h2>
+
+<p>它的部署方案极其简单，结合express框架，按照官网文档，几行代码就实现了一个实时通信server。它和Nginx/apache共存，原来的服务器还是提供原来的功能，新增的这台实时通信server只负责消息的推送。</p>
+
+<p>需要连上这台server也很简单，需要在前端js中加入:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;script src="/socket.io/socket.io.js"&gt;&lt;/script&gt;
+</span><span class='line'>&lt;script&gt;
+</span><span class='line'>  var socket = io.connect('http://&lt;serverIP&gt;:&lt;port&gt;');
+</span><span class='line'>&lt;/script&gt;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>实际上，利用服务器推送技术，我们能实现好多平常HTTP协议无法办到的事情。</p>
+
+<h2>移动端的实时推送</h2>
+
+<p>上述所讨论的所有东西都是Web端的实时通信，未来是属于移动端的，显然移动端的实时推送也非常重要。</p>
+
+<p>在移动端主要有以下两个技术：XMPP 和 MQTT，有兴趣的同学可以自己去了解一下。</p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-08-13T23:06:00+02:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/08/05/optimize-website/" title="Previous Post: 博客前端性能优化">&laquo; 博客前端性能优化</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/09/14/add-noti-to-duoshuo/" title="Next Post: 为多说增加评论推送">为多说增加评论推送 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2014/08/13/server-push-nodejs/';
+        var disqus_url = 'http://zyearn.com/blog/2014/08/13/server-push-nodejs/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

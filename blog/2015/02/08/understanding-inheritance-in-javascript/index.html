@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>理解Javascript中的继承 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="在学习Javascript的过程中，哪个部分最隐涩难懂？就我个人而言，是基于原型链的继承机制。它和普通的OO语言如C++、Java中的继承在语法上相似，但内部实现则不同。Javascript里没有“类”的概念，熟悉C++、Java的同学要问了，没有类的话那哪来的继承呢？ &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2015/02/08/understanding-inheritance-in-javascript">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">理解Javascript中的继承</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-02-08T12:30:00+01:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>在学习Javascript的过程中，哪个部分最隐涩难懂？就我个人而言，是基于原型链的继承机制。它和普通的OO语言如C++、Java中的继承在语法上相似，但内部实现则不同。Javascript里没有“类”的概念，熟悉C++、Java的同学要问了，没有类的话那哪来的继承呢？需要理解Javascript中的继承。首先得理解原型链。</p>
+
+<!-- more -->
+
+
+<h2>原型链</h2>
+
+<p>当年Javascript被Brendan Eich设计的目标之一就是简单，它只需要能在浏览器上做一些简单的判断和交互即可。如果引入了类，那这门语言就太复杂了。但还是需要一种方法来使对象和对象之间可以串起来，于是就诞生了原型链。那原型链到底是什么意思呢，简单来说，假设我想让B继承A，那么在Javascript中只需要设置B的原型为A即可，A自己也有它的原型，那么就构成了一个“原型链”。</p>
+
+<p>更准确一点，我们来看一些代码。当时C++和Java都用new来新建一个类的instance，会调一个所谓的“构造函数”，Brendan Eich也沿袭了这个思想。因为没有类，new后面应该加什么名字呢，他决定加构造函数。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">function</span> <span class="nx">Chinese</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">name</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面的代码定义了一个构造函数，它同时也是一个object（Javascript中所有东西都是object）。new一下这个构造函数会产生一个Chinese实例：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">personA</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Chinese</span><span class="p">(</span><span class="s2">&quot;bob&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="nx">alert</span><span class="p">(</span><span class="nx">personA</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>现在新问题来了，我们要为Chinese类加一个皮肤颜色的方法，好像这样就可以办到：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">function</span> <span class="nx">Chinese</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">name</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">skin</span> <span class="o">=</span> <span class="s2">&quot;yellow&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这样的结果就是所有的Chinese实例都会拥有一份skin的实例：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">personA</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Chinese</span><span class="p">(</span><span class="s2">&quot;bob&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">personB</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Chinese</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="nx">alert</span><span class="p">(</span><span class="nx">personA</span><span class="p">.</span><span class="nx">skin</span><span class="p">)</span> <span class="c1">// yellow</span>
+</span><span class='line'><span class="nx">alert</span><span class="p">(</span><span class="nx">personB</span><span class="p">.</span><span class="nx">skin</span><span class="p">)</span> <span class="c1">// yellow</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">personA</span><span class="p">.</span><span class="nx">skin</span> <span class="o">=</span> <span class="s2">&quot;black&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="nx">alert</span><span class="p">(</span><span class="nx">personA</span><span class="p">.</span><span class="nx">skin</span><span class="p">)</span> <span class="c1">// black </span>
+</span><span class='line'><span class="nx">alert</span><span class="p">(</span><span class="nx">personB</span><span class="p">.</span><span class="nx">skin</span><span class="p">)</span> <span class="c1">// yellow</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>所以这种方式有一个缺点，Chinese类无法共享一个共有的属性和方法。我们希望有一个类似于“基类”的东西，所有中国人都可以共享这个基类对象。为了解决这个问题，Brendan Eich决定为构造函数设置一个prototype的属性（它是一个object），把所有需要让实例共享的属性和方法都放到prototype这个object里头去，这个prototype叫做实例的原型。实例对象一旦创建，将自动那个引用到构造函数的prototype对象。也就是说，一个实例的属性和方法有两种，一种是本地的，一种是原型的。还是上面的例子，然后把skin放到Chinese.prototype当中去：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">function</span> <span class="nx">Chinese</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">name</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="nx">Chinese</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">skin</span> <span class="o">=</span> <span class="s2">&quot;yellow&quot;</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>之后访问实例的skin对象，javascript会先在本地属性中查找，若没有，则取原型中找。在这个例子中，在原型（也就是Chinese.prototype）中，找到了skin方法，所以如果想要修改所有Chinese实例的skin属性就非常容易了（好吧，就想象一下突然基因突变&hellip;），只要修改Chinese.prototype即可：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">personA</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Chinese</span><span class="p">(</span><span class="s2">&quot;bob&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">personB</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Chinese</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="nx">alert</span><span class="p">(</span><span class="nx">personA</span><span class="p">.</span><span class="nx">skin</span><span class="p">)</span> <span class="c1">// yellow</span>
+</span><span class='line'><span class="nx">alert</span><span class="p">(</span><span class="nx">personB</span><span class="p">.</span><span class="nx">skin</span><span class="p">)</span> <span class="c1">// yellow</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">Chinese</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">skin</span> <span class="o">=</span> <span class="s2">&quot;black&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="nx">alert</span><span class="p">(</span><span class="nx">personA</span><span class="p">.</span><span class="nx">skin</span><span class="p">)</span> <span class="c1">// black </span>
+</span><span class='line'><span class="nx">alert</span><span class="p">(</span><span class="nx">personB</span><span class="p">.</span><span class="nx">skin</span><span class="p">)</span> <span class="c1">// 此时输出的是black，而不是上例中的yellow</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>写到这里，有一个很自然的问题，实例能不能随意修改它的原型对象？答案是能也不能。假如typeof(原型属性)不是object（比如数字，字符串），那么不可修改；否则（比如[], {}），则能修改。</p>
+
+<p>在Javascript中，是用原型来实现所谓的“继承”，一旦你理解了原型链，那么就几乎理解了Javascript中的继承。</p>
+
+<h2>构造函数的继承与非构造函数继承</h2>
+
+<p>理解了原型链，就可以讲javascript中的继承机制了。关于这两个主题，在搜索资料的时候发现<a href="http://www.ruanyifeng.com/">阮一峰</a>在他的两篇文章里写得已经非常清楚了：
+<a href="http://www.ruanyifeng.com/blog/2010/05/object-oriented_javascript_inheritance.html">构造函数的继承</a>和
+<a href="http://www.ruanyifeng.com/blog/2010/04/using_this_keyword_in_javascript.html">非构造函数的继承</a></p>
+
+<h2>参考</h2>
+
+<p>[1] <a href="http://book.douban.com/subject/3590768/">JavaScript语言精粹</a><br />
+[2] <a href="http://www.ruanyifeng.com">http://www.ruanyifeng.com/</a><br />
+[3] <a href="http://blog.vjeux.com/2011/javascript/how-prototypal-inheritance-really-works.html">http://blog.vjeux.com/2011/javascript/how-prototypal-inheritance-really-works.html</a></p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-02-08T12:30:00+01:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/12/30/learn-from-a-outsourcing-project/" title="Previous Post: 从一个外包项目中学到的">&laquo; 从一个外包项目中学到的</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/03/22/what-happens-when-you-kill-a-process/" title="Next Post: 当执行kill -9 PID时系统发生了什么">当执行kill -9 PID时系统发生了什么 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2015/02/08/understanding-inheritance-in-javascript/';
+        var disqus_url = 'http://zyearn.com/blog/2015/02/08/understanding-inheritance-in-javascript/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

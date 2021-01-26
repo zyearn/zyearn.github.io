@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>nginx源码阅读之 从启动到接受第一个http请求 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="nginx是个高性能的服务器，一个重要的因素是利用了I/O复用（在linux2.6以后的epoll，freebsd的kqueue，solaris上的eventport，在windows上用iocp，本文以epoll为例说明），epoll比poll性能提升太多，不需要一些浪费cpu的轮询操作。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2014/04/17/how-nginx-handle-request">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Nginx源码阅读之 从启动到接受第一个http请求</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-17T19:32:00+02:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>nginx是个高性能的服务器，一个重要的因素是利用了I/O复用（在linux2.6以后的epoll，freebsd的kqueue，solaris上的eventport，在windows上用iocp，本文以epoll为例说明），epoll比poll性能提升太多，不需要一些浪费cpu的轮询操作。但这只是nginx性能高的沧海一粟，它的代码底层做了大量的优化，比如在比较4个字符的字符串的时候，nginx把这个4个字符转化为32位整型然后做整型的比较，以减少底层指令数。除了某些外部的库（openssl，pcre），所有的轮子都是自己造的，比如内存池，字符串，链表，队列，哈希表，红黑树等。</p>
+
+<!-- more -->
+
+
+<p>任何server本质来说无非就做了这么一件事：创建socket，接着bind，接着listen，最后accept等待tcp连接，从fd里读读写写。随着服务器编程模型的不同，会在不同的线程/进程里accept然后处理请求。本文尝试在框架上说明nginx是怎么做这件事情的。</p>
+
+<p>nginx在大多数情况下是master-worker的形式工作的，因为要使多个worker共享监听同一个端口，所以在fork之前需要把这个socket初始化，然后子进程继承这个socket。</p>
+
+<p>在fork之前，nginx在main函数中调用了一个重要的函数叫<code>ngx_init_cycle</code>，它主要用来初始化<code>ngx_cycle_t</code>类型的一个全局变量，这个函数接着调用<code>ngx_open_listening_sockets</code>，这个函数做的是创建一个新的socket，接着调用bind，接着在这个listenfd上listen，最后将这个listenfd保存在listen<code>ngx_cycle_t</code>类型全局变量中的listening数组里。</p>
+
+<p>在fork以后，worker将调用所有注册模块的<code>init_process</code>钩子函数（就是回调函数），其中有个核心模块叫<code>ngx_event_core_module</code>，它的<code>init_process</code>这个钩子被注册为<code>ngx_event_process_init</code>(src/event/ngx_event.c)，在这个函数中，它为每一个在listening数组中的listenfd创建一个connection，以及这个connection对应的读写事件。
+然后做了非常重要的一步：将读事件的回调函数设置为<code>ngx_event_accept</code>，接着把这个listenfd放到了epoll里。这代表什么意思呢，在<code>epoll_wait</code>返回listenfd可读的时候，就回调注册的钩子函数<code>ngx_event_accept</code>，这个函数的大致代码如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void
+</span><span class='line'>ngx_event_accept(ngx_event_t *ev)
+</span><span class='line'>{
+</span><span class='line'>    ...
+</span><span class='line'>    // 从listenfd获得一个连接
+</span><span class='line'>    s = accept(...);
+</span><span class='line'>    ...
+</span><span class='line'>    //为该链接获得一个connection
+</span><span class='line'>    c = ngx_get_connection(s, ev-&gt;log);
+</span><span class='line'>    ...
+</span><span class='line'>
+</span><span class='line'>    //回调，主要设置c的读写回调函数，并且加入epoll中
+</span><span class='line'>    ls-&gt;handler(c);
+</span><span class='line'>    ...
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>和预期的差不多，accpet一个连接fd，然后通过某个回调函数将fd的读写回调函数设置为http模块相关的函数，接着再放入epoll中。这里比较重要的是<code>ls-&gt;handler(c)</code>，这个handler通过下面这系列调用（ngx_http_block->ngx_http_optimize_servers->ngx_http_add_listening->ngx_http_init_listenin）被设置为<code>ngx_http_init_connection</code>。接下来来看看这个函数中设置事件回调的部分：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>c-&gt;read-&gt;handler = ngx_http_wait_request_handler;
+</span><span class='line'>c-&gt;write-&gt;handler = ngx_http_empty_handler;
+</span><span class='line'>...
+</span><span class='line'>// 将事件放入epoll
+</span><span class='line'>ngx_add_event(...);</span></code></pre></td></tr></table></div></figure>
+
+
+<p>也就是说，当这个fd可读时，调用<code>ngx_http_wait_request_handler</code>来处理这个请求，之后的事情就是http模块的解析过程了，这个放在以后在写。随着请求的越来越多，epoll里的事件也越来越多，每次可读或者可写都调用相应的回调函数，并且epoll保证了高并发。以上就是从创建一个listen socket到接受一个http请求的框架，其中省略了很多很多的细节。</p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-17T19:32:00+02:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/29/sycron-vs-block/" title="Previous Post: 异步vs非阻塞">&laquo; 异步vs非阻塞</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/06/23/bachelor-thesis/" title="Next Post: 本科毕设">本科毕设 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2014/04/17/how-nginx-handle-request/';
+        var disqus_url = 'http://zyearn.com/blog/2014/04/17/how-nginx-handle-request/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

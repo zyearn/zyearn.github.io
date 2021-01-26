@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>异步vs非阻塞 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="在I/O模型中有两个概念特别容易混淆，就是同步和异步（synchronous vs nonsynchronous），阻塞和非阻塞（blocking vs nonblocking）的区别在什么地方。 同步非阻塞可能吗，异步阻塞有可能吗？
+这几个概念在stevens的《UNIX网络编程（卷一）》6. &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2014/03/29/sycron-vs-block">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">异步vs非阻塞</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-29T20:13:00+01:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>在I/O模型中有两个概念特别容易混淆，就是同步和异步（synchronous vs nonsynchronous），阻塞和非阻塞（blocking vs nonblocking）的区别在什么地方。</p>
+
+<p>同步非阻塞可能吗，异步阻塞有可能吗？
+这几个概念在stevens的《UNIX网络编程（卷一）》6.2节写得很清楚，这里写个总结吧。</p>
+
+<!-- more -->
+
+
+<h2>阻塞I/O</h2>
+
+<p>最流行的I/O模型就是阻塞模型，如果数据没有准备好，那么程序就不会往下运行，一个例子是linux下的系统调用<code>read</code>和<code>write</code>，如果调用了read，但是file descriptor没有数据的话，就一直等待用户的输入。</p>
+
+<h2>非阻塞I/O</h2>
+
+<p>把一个file descriptor设置为非阻塞的意思就是，当数据没有准备好，返回一个错误码。在linux下的一个例子就是在<code>read</code>之前，调用<code>fcntl</code>将<code>O_NONBLOCK</code>作为参数，将fd设为非阻塞的。如果read返回错误码，那么就接着read，如此反复，这种方法叫轮询，浪费cpu时间。</p>
+
+<p>阻塞和非阻塞比较好理解的，然后我们来看同步和异步。</p>
+
+<h2>同步/异步IO</h2>
+
+<p>POSIX这样定义同步和异步：</p>
+
+<blockquote><p>同步I/O导致请求阻塞，直到I/O操作完成。
+异步I/O不导致进程阻塞。</p></blockquote>
+
+<p>根据同步的定义，我们得知，只要读或写的操作，是在当前线程完成的，在一段时间里只做I/O，其它事情都不能干，那么就是同步I/O。根据异步的定义，如果我们只需要发布一个命令，让小弟（别的线程）去进行读写操作，然后读写完了告诉主线程（通过回调函数），那么就是异步I/O。</p>
+
+<p>NodeJS就是通过小弟线程来实现异步I/O的。其实还有别的方法，比如Linux的AIO，是操作系统层面提供的异步方案，是真正的异步I/O，但它的使用现在非常受限，所以用得不是特别广泛。</p>
+
+<p>简单来说，理解同步异步的关键是<em>谁在进行真正的I/O</em>, 如果是主线程，那么就是同步；如果是小弟线程，小弟线程工作完了报告主线程，那么就是异步。</p>
+
+<p>所以，异步和非阻塞是完全两个概念。但在某些场景下，这两个概念是混用的：当讨论一个API返回速度的时候，异步和非阻塞都是立即返回，在这个上下文中，异步和非阻塞表示的意思相同。</p>
+
+<p>回到我们文章开头的问题：</p>
+
+<blockquote><p>同步非阻塞可能吗？</p></blockquote>
+
+<p>当然可能，阻塞和非阻塞I/O都属于同步I/O。</p>
+
+<blockquote><p>异步阻塞可能吗？</p></blockquote>
+
+<p>根本就没有这个概念，是我瞎造出来的。不过如果是用I/O线程来实现的“假异步”，线程读数据的依然是阻塞的，这时候勉强可以说是“异步阻塞”。真异步需要操作系统的支持。</p>
+
+<p>这里在顺便说一下，很多人以为epoll就是异步的，这个想法是错的，epoll是同步的，它只是用来告诉你哪个file descriptor可以读写了，至于怎么读怎么写，才是讨论异步或同步I/O的地方。</p>
+
+<h2>一些例子</h2>
+
+<p>同步阻塞：read/write，select/poll（有些说法说select是异步阻塞的，但select做的仅仅是告诉你哪些fd准备读写了，然后主线程可以开始读，所以根据定义，它应该还是同步的）。</p>
+
+<p>同步非阻塞：read/write(O_NONBLOCK)</p>
+
+<p>异步非阻塞：Linux上的AIO库</p>
+
+<h2>References</h2>
+
+<p>[1] <a href="http://www.ibm.com/developerworks/cn/linux/l-async">http://www.ibm.com/developerworks/cn/linux/l-async</a></p>
+
+<p>[2] <a href="http://book.douban.com/subject/1500149/">《UNIX网络编程》</a></p>
+
+<p>[3] <a href="http://www.cnblogs.com/Jerry-Chou/archive/2012/04/23/2466045.html">http://www.cnblogs.com/Jerry-Chou/archive/2012/04/23/2466045.html</a></p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-29T20:13:00+01:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/computersystem/'>computersystem</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/25/node-glance/" title="Previous Post: 初探Node.js">&laquo; 初探Node.js</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/17/how-nginx-handle-request/" title="Next Post: nginx源码阅读之 从启动到接受第一个http请求">nginx源码阅读之 从启动到接受第一个http请求 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2014/03/29/sycron-vs-block/';
+        var disqus_url = 'http://zyearn.com/blog/2014/03/29/sycron-vs-block/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

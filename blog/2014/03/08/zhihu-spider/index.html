@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>知乎爬虫 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="长久以来一直想解决一个问题，就是知乎上最高赞同的Top10是哪些答案，知乎内部的人查一下数据库就可以了，而在外部只能通过爬虫。可能这个问题对很多人而言意义不是很大，但我一直非常好奇&hellip;于是开始写了。 在写具体细节之前，先给一个爬的结果吧，截止至2014年3月7号的知乎Top10如下 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2014/03/08/zhihu-spider">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">知乎爬虫</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-08T11:43:00+01:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>长久以来一直想解决一个问题，就是知乎上最高赞同的Top10是哪些答案，知乎内部的人查一下数据库就可以了，而在外部只能通过爬虫。可能这个问题对很多人而言意义不是很大，但我一直非常好奇&hellip;于是开始写了。</p>
+
+<p>在写具体细节之前，先给一个爬的结果吧，截止至2014年3月7号的知乎Top10如下：</p>
+
+<!-- more -->
+
+
+<ol>
+<li><a href="http://www.zhihu.com/question/19568396/answer/16245159">你觉得自己牛逼在哪里？</a> 18279票</li>
+<li><a href="http://www.zhihu.com/question/20043810">精神分裂症患者眼中的世界是什么样的？</a> 15929票</li>
+<li><a href="http://www.zhihu.com/question/20875474/answer/16603385">到底什么叫爱？爱一个人到底什么感觉？</a> 14993票</li>
+<li><a href="http://www.zhihu.com/question/20151457/answer/14141658">二十多岁该做些什么，将来才不会后悔？</a> 14419票</li>
+<li><a href="http://www.zhihu.com/question/22238159/answer/20750109">你有什么相见恨晚的知识想推荐给年轻人？</a> 13810票</li>
+<li><a href="http://www.zhihu.com/question/20840874/answer/16365195">哪些东西买了之后，会让人因生活质量和幸福感提升而感觉相见恨晚？</a> 12632票</li>
+<li><a href="http://www.zhihu.com/question/22464261/answer/21881110">租个女友回家过年靠谱吗，有什么风险？</a> 12504票</li>
+<li><a href="http://www.zhihu.com/question/21726594/answer/20479947">同样 25 岁，为什么有的人事业小成、家庭幸福，有的人却还在一无所有的起点上？</a> 11913票</li>
+<li><a href="http://www.zhihu.com/question/19895789/answer/15512856">你爱上某一个人时，最奇特的一次是因为什么？</a> 9251票</li>
+<li><a href="http://www.zhihu.com/question/21901162/answer/19711951">读一百本书和健身练6块腹肌相比，哪个对于找漂亮的女朋友更有帮助？</a> 8955票</li>
+</ol>
+
+
+<h2>实现</h2>
+
+<p>话说爬虫用python的urllib2和BeautifulSoup或者java写是分分钟的事情，我想了想还是算了吧，我不喜欢这样写，我决定用C++来写这个爬虫。正巧我搜到了有位网友写了个搜索引擎，里面的爬虫部分也是在linux下用C++写的，于是我借鉴了一下他写的一些类库, 还好不是从头开始写，还算方便。</p>
+
+<h2>逻辑</h2>
+
+<ol>
+<li>确定爬的深度N，然后维护N个队列，用BFS扫第i的队列的时候把下一轮要处理的url放在第i+1个队列中。</li>
+<li>用MD5值去重。</li>
+<li>爬虫的初始种子是一些zhihu名人，在第0个队列里，然后把他们的followers和followees的主页url加入下一个队列。</li>
+<li>使用了150个线程，爬的速度还算快。</li>
+</ol>
+
+
+<h2>注意点</h2>
+
+<p>多线程访问共享变量(url队列)，就算你加了锁，还由可能出现想都没想到过的情况&hellip;多线程编程一定要考虑周全（实际上这不太可能）。</p>
+
+<h2>源码</h2>
+
+<p>如果你对源码感兴趣或者想拿自己的zhihu账号作为种子爬一爬，我把代码放在了<a href="https://github.com/zyearn/zhihuCrawler">github</a>上。</p>
+
+<h2>进阶</h2>
+
+<p>实际上，写一个单机爬虫涉及不到高级的东西，设计并实现一个分布式爬虫是一件有挑战的事情。</p>
+
+<p>首先要确定架构，一般的master-slave模型是比较好的选择，slave干完事了向master申请新的URL来爬。需要在master上维护一个URL队列，slave将当前URL上所有的网页发送给master。</p>
+
+<p>其次是效率，用MD5在大规模去重上实在太慢！一个解决方法是用bloom filter，它的复杂度只有O(1)，但是这个方法有个缺点，就是如果一个元素不在集中，会有非常小的概率被判断在集合里，导致遗漏。实际中这个概率小到我们可以忽略不计。</p>
+
+<p>爬虫说细了是个很复杂的东西。它还有很多很多话题可以讨论。比如数据库存储，对网页如何有效地处理等等。</p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-08T11:43:00+01:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/02/28/make-friends-with-time/" title="Previous Post: 《把时间当作朋友》读书笔记">&laquo; 《把时间当作朋友》读书笔记</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/25/node-glance/" title="Next Post: 初探Node.js">初探Node.js &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2014/03/08/zhihu-spider/';
+        var disqus_url = 'http://zyearn.com/blog/2014/03/08/zhihu-spider/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

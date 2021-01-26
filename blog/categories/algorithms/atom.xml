@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: algorithms | ]]></title>
+  <link href="http://zyearn.com/blog/categories/algorithms/atom.xml" rel="self"/>
+  <link href="http://zyearn.com/"/>
+  <updated>2021-01-26T23:42:39+01:00</updated>
+  <id>http://zyearn.com/</id>
+  <author>
+    <name><![CDATA[Jiashun Zhu]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[ABtest数学原理]]></title>
+    <link href="http://zyearn.com/blog/2019/05/22/how-to-judge-effectiveness-of-exp/"/>
+    <updated>2019-05-22T14:19:00+02:00</updated>
+    <id>http://zyearn.com/blog/2019/05/22/how-to-judge-effectiveness-of-exp</id>
+    <content type="html"><![CDATA[<h2>问题</h2>
+
+<p>假设现在有一个新的点击注册文案，想要测试它的效果，实验人员将实验分为对照组和实验组，给对照组看原来的文案，而给实验组看新的文档。实验结果是，对照组中的14500人中有1450人注册点击，而在实验组的14500人中有1600人点击注册，如何通过实验数据来判定新的文案是否优于老的文案？</p>
+
+<p>主要看两个指标：第一个是实验是否统计显著（statistically significant）；第二个是统计功效（statistical power）是否满足。</p>
+
+<h2>统计显著</h2>
+
+<p>首先看实验是否统计显著，即pvalue是否小于显著性水平，使用的方法是假设检验。具体方法是当零假设（两个版本没有区别）成立时，算出得到观测数据的概率pvalue，如果这个概率小于显著性水平，则拒绝零假设，实验结果显著。pvalue具体计算方式如下：
+假设p1,p2为两个版本的总体点击率，对控制组的样本均值设为X1bar，实验组的样本均值为X2bar，根据中心极限定理，X1bar和X2bar均满足正态分布。根据<a href="https://en.wikipedia.org/wiki/Sum_of_normally_distributed_random_variables">两个独立正态分布变量之和依旧是正态分布</a>，X1bvar-X2bar也满足正态分布。于是有
+<img src="/images/distri.png" alt="avatar" /></p>
+
+<p>然后建立零假设p1-p2=0，并计算z-score，如果z-score大于显著性水平所在的临界值，那么就拒绝原假设，即p1不等于p2。这里需要注意的是，就算拒绝了原假设，它也是有概率成立的，只是这个概率太小，一般显著性水平alpha设置在0.05，那么只能说95%的概率原假设是不成立的。如果pvalue小于alpha，但是真实结果是p1等于p2，这类错误叫做第一类错误，让alpha的值较小可以降低这类错误的发生。</p>
+
+<h2>统计功效</h2>
+
+<p>第二个指标是统计功效。需要让这个指标达标，样本数量需要满足一定的要求。在实验开始前，先计算每个实验的分流数，让实验经过那么多流量后，该实验的统计功效才能得到满足，分流数的计算方法为(来自<a href="http://www.evanmiller.org/ab-testing/sample-size.html">http://www.evanmiller.org/ab-testing/sample-size.html</a>)</p>
+
+<pre><code class="javascript">function num_subjects(alpha, power_level, p, delta) {
+    if (p &gt; 0.5) {
+        p = 1.0 - p;
+    }
+    var t_alpha2 = ppnd(1.0-alpha/2);
+    var t_beta = ppnd(power_level);
+
+    var sd1 = Math.sqrt(2 * p * (1.0 - p));
+    var sd2 = Math.sqrt(p * (1.0 - p) + (p + delta) * (1.0 - p - delta));
+
+    return (t_alpha2 * sd1 + t_beta * sd2) * (t_alpha2 * sd1 + t_beta * sd2) / (delta * delta);
+}
+</code></pre>
+
+<p>其中alpha为显著性水平，power_level是功效值，p是控制组基准值，delta为实验的最小差异。当实验经过那么多流量后，如果统计显著，那么该实验就是可信的；如果统计不显著，我们要确保这两个版本确实没有足够大的差异，即接受零假设p1=p2，此时会发生的一种情况是，p1不等于p2，只是这次实验中，p1-p2的值刚好落在假设检验的接受域中，这类错误称为第二类错误（接受了错误的原假设）。为了让第二类错误足够少，可以让p1-p2这个正态分布足够窄，那么落在Z_alpha之内的值的概率就足够小，此类情况的概率就足够小。</p>
+
+<p>在以上两种指标都达标时，当实验结果显著时，它大概率就是显著的（显著性水平保证了第一类错误小于5%）；当实验结果不显著时，它大概率就是不显著的（统计功效保证了对这个不显著的结果有多大的信心）。</p>
+
+<p>实验组和控制组还可以计算置信区间，表示总体参数的范围。置信区间有两种解释方式。
+第一种是计算一个结果本身的置信区间，比如Click/Impression=10/10000，那么它的置信区间为0.001±sqrt(0.1*0.9 / 10000)
+第二种是计算某组相对控制组的提升百分比置信区间，我们采取这种方式展示。</p>
+
+<p>不仅要看最终是否显著，还需要看趋势：试想有一个改进在白天可以提升100%，而在夜晚下降了20%，如果只看最终的结果，那么一定是显著的，但是通过看趋势我们完全可以看到晚上的异常值，从而更细粒度地发现问题。</p>
+
+<h2>实验方法论</h2>
+
+<ul>
+<li>根据alpha、power_level、p、delta计算出实验最小分流数（若知道pv，则可以算出实验时间），这个计算需要用户自行用工具计算（很多在线工具）</li>
+<li>设置实验参数、上线实验</li>
+<li>实验期间观察关键指标的变化趋势，看是否有大起大落等异常现象</li>
+<li>经历了最小分流数后，实验结束，看实验是否显著（pvalue小于显著性水平）。如果显著，则较有信心改进版会有提升；若不显著，则改进版可能真的没什么效果</li>
+<li>置信区间表明了上线后提升的范围</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[什么是可计算理论]]></title>
+    <link href="http://zyearn.com/blog/2013/06/28/what-is-computability/"/>
+    <updated>2013-06-28T21:47:00+02:00</updated>
+    <id>http://zyearn.com/blog/2013/06/28/what-is-computability</id>
+    <content type="html"><![CDATA[<p>这个学期刚好上这门课，此课绝对是CS课程中的神课，需要一定的决心和耐心才能啃下来。这篇文章可以说是一篇科普文，争求通俗易懂。</p>
+
+<p>可计算理论是计算理论的一个分支，还有两个分支分别是自动机和计算复杂性。</p>
+
+<!-- more -->
+
+
+<p>这些名词都顾名思义，自动机讲的是计算的模型，比如图灵机，它是由无限长磁带，读写磁头和一些状态转移序列组成；可计算理论，研究的是一个函数（或程序）是不是能被计算，但是什么叫能被计算呢，比如说给定x，你给我计算出2x，这个函数就是可计算的，那又有什么函数是不可计算的呢？稍后你会看到著名的停机问题，这个程序就是不可计算的；计算复杂性研究的是如何有效地解决问题。</p>
+
+<p>这刚好是计算的三个方面：计算的模型，计算的界限，计算的代价。</p>
+
+<p>现在让我们关注可计算性这个方面。</p>
+
+<p>什么是可计算函数？
+如果存在一段程序来计算一个函数，那么这个函数就是可计算的。通俗来讲，你能用编程语言写出来并运行的都是可计算函数，更通俗来讲，你写完程序，在windows下会生成一个exe执行文件，假设打开后会提示你给一个程序的输入，这个程序根据这个输入能计算出相应的结果，可以把这个程序看为一个函数，给定x，输出f(x)。以后你每次想计算f(x)，只要运行相同的程序就可以了。处理一类问题有相同的算法，这样的函数叫可计算函数。比如给x，输出x<sup>2</sup>+6，就是可计算的。</p>
+
+<p>这里需要把程序P和函数f的概念说清楚。如果一个程序P的效果可以和一个函数f的效果一样，也就是说给定x，P(x)=f(x)，我们就说P能够计算f。但是他们不是一一对应的关系，即多个程序可以对应同一个f。比如说给定x，输出2x，函数f是唯一确定的，即f(x)=2x，但程序不是确定的，比如我可以给每个程序最后加个不相关赋值语句，程序的输出是不变的，但每个程序都是不一样的。</p>
+
+<p>什么是不可计算函数？
+考虑这样一个问题：是否存在一个程序，它能够计算任何程序在给定输入下是否会运行结束？
+答案是不存在。这就是著名的停机问题。
+现在让我们来证明一下，证明思想相当精妙和精简。
+假设这样的函数存在，设为halt(char<em> program, char</em> input)，那么这个函数编写出来就是这样的：
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>bool halt(char&lt;em> program, char&lt;/em> input)&lt;br/>
+</span><span class='line'>{&lt;br/>
+</span><span class='line'>    if(&lt;program> halts on &lt;input>)&lt;br/>
+</span><span class='line'>        return true;&lt;br/>
+</span><span class='line'>    else&lt;br/>
+</span><span class='line'>        return false;&lt;br/>
+</span><span class='line'>}&lt;br/></span></code></pre></td></tr></table></div></figure></p>
+
+<p>然后我们考虑这样一个函数，这个函数就像它的程序名一样那么邪恶：
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>void Evil(char *p)&lt;br/>
+</span><span class='line'>{&lt;br/>
+</span><span class='line'>    if(halt(p,p))&lt;br/>
+</span><span class='line'>        while(1);   //forever loop&lt;br/>
+</span><span class='line'>    else&lt;br/>
+</span><span class='line'>        return;&lt;br/>
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure></p>
+
+<p>然后我们考虑Evil(Evil)是否会停机（即Evil这个程序的输入是它本身）。</p>
+
+<p>如果Evil(Evil)会停机，那么必然执行的是else语句里的return，那么if的判定条件为false，那么halt(Evil,Evil)必返回false，即Evil程序不会在Evil输入上停机，而假设是会停机，矛盾。</p>
+
+<p>如果Evil(Evil)不会停机，那么必然执行的if语句里的死循环，所以if的判定条件为true，那么halt(Evil,Evil)必返回true，即Evil程序会在Evil输入上停机，而假设是不会停机，矛盾。</p>
+
+<p>所以它停也矛盾，不停也矛盾，于是得出 halt(char* program, char* input) 这个函数是不存在的。</p>
+
+<p>实际上还有很多函数都是不可计算的。比如，
+不存在一个程序，它能够判断任何程序是否是0函数。（0函数就是说对于所有输入输出都是0）。
+不存在一个程序，它能够判断任意两个程序是否计算同样的f。</p>
+
+<p>那么是否有一个比较系统的方法来判断哪些函数是不可计算的呢？答案是有的，这就是著名的Rice&rsquo;s Theorem。这个定理说的是，有一个函数集合B（即这个集合B是函数f的集合），并且B不是空集，也不是全部函数f，那么程序P是否属于B是不可计算的。</p>
+
+<p>什么意思呢，举个形象的例子。比如说你是程序设计这门课的助教。你布置了一个作业，要求学生写一个程序，任意给定x，输出2x。学生马上写完交给你了，你惊奇地发现这门课竟然有200名学生，然后一个偷懒的想法在你脑中诞生了：我是不是能写一个程序，来自动判断学生上交的程序是否满足要求呢？Rice‘s theorem打破了你的幻想，这样的程序是不存在的。</p>
+
+<p>这个例子中，令B包含f(x)=2x这个函数，助教想做的是判断一个程序是否属于这个集合B，Rice‘s theorem告诉我们这样的程序不存在。</p>
+
+<p>除了研究函数的可计算性，可计算理论还关注什么？
+实际上，这门课包含的内容远远不止上文这些东西。还有一些很重要的概念，比如：
+1. 康托提出的对角线方法；
+2. 哥德尔不完备定理也可以通过这门课的后续内容推导出来；
+3. 归约的思想，问题难度的划分。
+4. 第一和第二递归定理。
+这些都是相当美妙，计算理论里相当关注的问题。</p>
+
+<p>本文不可能全部介绍这些概念，如果你有兴趣，请参考Nigel Gutland写的《An introduction to recursive function theory》，写得算比较详细了。</p>
+
+<p>至此，你应该懂了什么是停机问题，什么是可计算函数，什么是不可计算的，作为科普，这些就够了。计算理论本身就是需要钻研才能明白的学科。</p>
+
+<p>这门课可能对找工作的人没有太大帮助，但是它让人体会到了美和伟大。</p>
+
+<p>参考资料:<br />
+[1] 《An introduction to recursive function theory》. Nigel Gutland <br />
+[2] <a href="http://book.douban.com/review/1321006/">http://book.douban.com/review/1321006/</a> <br />
+[3] 《暗时间》 刘未鹏 <br />
+[4] <a href="http://www.cnblogs.com/lienhua34/archive/2012/03/05/2381296.html">http://www.cnblogs.com/lienhua34/archive/2012/03/05/2381296.html</a></p>
+]]></content>
+  </entry>
+  
+</feed>

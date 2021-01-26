@@ -1,0 +1,292 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>为多说增加评论推送 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="先说下为什么会有这篇文章。 曾经在搭博客的时候，使用的是disqus作为评论插件，使用了一阵后发现它有两个缺点，首先，它的加载速度非常慢，其次，很多人都没有disqus账号导致要注册才能评论。于是想找个本土化的评论系统，满足我的加载速度要求和可以通过社交平台账号登陆然后评论的要求。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2014/09/14/add-noti-to-duoshuo">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">为多说增加评论推送</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-14T10:30:00+02:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>先说下为什么会有这篇文章。</p>
+
+<p>曾经在搭博客的时候，使用的是disqus作为评论插件，使用了一阵后发现它有两个缺点，首先，它的加载速度非常慢，其次，很多人都没有disqus账号导致要注册才能评论。于是想找个本土化的评论系统，满足我的加载速度要求和可以通过社交平台账号登陆然后评论的要求。</p>
+
+<!-- more -->
+
+
+<p>调查下来发现<a href="http://duoshuo.com/">duoshuo</a>这款评论插件比较符合，速度快，社交网站登录，还提供邮件提醒功能，就决定用它了！</p>
+
+<p>问题很快就出现了，多说只有在一个用户第一次评论完，另外一个用户回复第一个用户的时候，才会有邮件通知说“xxx回复了你”，也就是说如果不点“回复某人”的按钮，而直接留言，多说是不会邮件提示你有留言了。不知道多说为什么不解决这个问题，流量太大不好解决？反正让人很不舒服。</p>
+
+<p>那就让我们来解决这个问题。调查了下，大概有下面两种思路：</p>
+
+<ol>
+<li>调用duoshuo的API</li>
+<li>爬下duoshuo的admin页面，里面有admin的所有评论</li>
+</ol>
+
+
+<h2>调用duoshuo的API</h2>
+
+<p>多说开放了获取某一篇文章评论的API，但这个API有个限制就是这篇文章一定要有个unique key才能获取。而这个unique key本身就是可有可无的，我现在所有的文章都没有这个key。如果要用API的话，要给所有的文章加上这个key，还得保证以后所有的文章都要自动生成这个key，当然手动也可以，就是太麻烦。</p>
+
+<p>更麻烦的是，对于每篇新的文章，我都要在调API的地方注册这个新的key，之后才会获取到这篇文章的评论。太麻烦了，放弃这种方法。</p>
+
+<h2>爬虫</h2>
+
+<p>登录多说的admin页面，会发现所有的评论都列在页面上，那直接把它们爬下来不就行了。定时运行爬虫脚本，如果这次爬的评论数比上次爬的多，那么说明有新的评论。</p>
+
+<p>这里的爬虫是用nodejs写的，因为它发起一个自定义header的get请求实在太容易了。具体应该发什么，在浏览器中打开审查元素看一下浏览器发送请求带了哪些header就可以。admin页面如果不设置cookie是无法登录的，所以这里我们要模拟浏览器设置cookie来发送GET请求。马上试了下，发现爬下来的页面什么都没有，定神再看，它的评论列表是通过ajax拿到然后通过jquery的插件画出来的。</p>
+
+<p>于是问题就变成了，模拟发送这个ajax，然后分析返回数据得出评论数，和上一次的结果比较，若大于，则有新评论。好，开始写程序，header比较重要，正确设置好cookie才能拿到数据，在我浏览器中是下面这样的：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>var options = {
+</span><span class='line'>    hostname: 'zyearn.duoshuo.com',
+</span><span class='line'>    port: 80,
+</span><span class='line'>    path: '/api/posts/list.json?order=desc&source=duoshuo%2Crepost&max_depth=1&limit=30&related%5B%5D=thread&related%5B%5D=iplocation&nonce=xxxxxxxx&status=all',
+</span><span class='line'>    headers:{
+</span><span class='line'>        'Connection': 'Close',
+</span><span class='line'>        'Cache-Control': 'max-age=0',
+</span><span class='line'>        'Accept': 'application/json, text/javascript, */*; q=0.01',
+</span><span class='line'>        'Referer': 'http://zyearn.duoshuo.com/admin/',
+</span><span class='line'>        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36',
+</span><span class='line'>        'Accept-Language': 'zh-CN,zh;q=0.8',
+</span><span class='line'>        'Accept-Charset': 'utf-8',
+</span><span class='line'>        'Cookie': 'duoshuo_unique=xxxx; PHPSESSID=xxxx'
+</span><span class='line'>    }
+</span><span class='line'>};</span></code></pre></td></tr></table></div></figure>
+
+
+<p>返回的是一个json数据，其中有一个域值正好是评论数，拿到以后和原来的比较即可。还需要保存上一次运行的评论数结果，我将它保存在一个文件中，每次去读取。</p>
+
+<h3>推送</h3>
+
+<p>既然我们已经知道了是否有新的评论，那么就要推送给用户，这里提供两个方案，短信和邮件。</p>
+
+<h4>短信推送</h4>
+
+<p>飞信提供了一个免费的命令行工具，能通过它来发送短信。具体教程请参考<a href="http://bbs.it-adv.net/viewthread.php?tid=1081">这里</a>;</p>
+
+<h4>邮件推送</h4>
+
+<p>Mutt是一个命令行邮件发送工具，能达到我们的目的，设置请参考我的<a href="http://wiki.zyearn.com/tool/mutt.html">wiki</a>。</p>
+
+<h3>设置cron</h3>
+
+<p>因为这是一个定时运行的脚本，所以要设置crontab任务。在cron中加入下列代码：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>*/1 * * * * /usr/local/sbin/node /root/duoshuo/duoshuoCrawler.js</span></code></pre></td></tr></table></div></figure>
+
+
+<p>意思是每隔1分钟去检查一下是否有新评论，如果你的服务器压力太大，可以把时间改长。</p>
+
+<p>至此，我们的推送功能就开发好了。全部的代码已经放在了<a href="https://github.com/zyearn/duoshuo--notification">github</a>。</p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-09-14T10:30:00+02:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/08/13/server-push-nodejs/" title="Previous Post: 服务器推送技术">&laquo; 服务器推送技术</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/11/17/visit-server-behind-nat/" title="Next Post: 如何访问NAT后的server">如何访问NAT后的server &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2014/09/14/add-noti-to-duoshuo/';
+        var disqus_url = 'http://zyearn.com/blog/2014/09/14/add-noti-to-duoshuo/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>

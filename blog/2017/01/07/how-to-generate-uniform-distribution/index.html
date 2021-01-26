@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>如何生成[0, N)中的随机数 - </title>
+  <meta name="author" content="Jiashun Zhu">
+
+  
+  <meta name="description" content="写程序的时候，经常会遇到这样的需求：已知rand函数，生成一个范围在[0, N)的随机数。
+比如我们有15个球，随机选择一个，则此时N等于15。
+在这个问题中，我们通常希望这个随机数是满足均匀分布（uniform distribution）的，即每个数字出现的概率是一样的。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://zyearn.com/blog/2017/01/07/how-to-generate-uniform-distribution">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/data-table.css" media="screen, projection" rel="stylesheet" type="text/css" />
+  <link href="/atom.xml" rel="alternate" title="" type="application/atom+xml">
+  <script>
+</script>
+
+
+  
+
+</head>
+
+<body   >
+  <header style="padding: 0"><hgroup>
+  <h1><a href="/"></a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:zyearn.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">所有文章</a></li>
+  <li><a href="/about">关于我</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">如何生成[0, N)中的随机数</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-01-07T17:40:00+01:00" pubdate data-updated="true"></time>
+      </p>
+    
+  </header>
+
+
+<div class="entry-content">
+    <p>写程序的时候，经常会遇到这样的需求：已知rand函数，生成一个范围在[0, N)的随机数。
+比如我们有15个球，随机选择一个，则此时N等于15。
+在这个问题中，我们通常希望这个随机数是满足均匀分布（uniform distribution）的，即每个数字出现的概率是一样的。
+还有一类随机数生成问题，是要求实现rand这个函数本身的，<a href="https://en.wikipedia.org/wiki/Pseudorandom_number_generator">这类问题</a>已经被广泛过，这篇文章不会讨论这类的问题。</p>
+
+<p>之前看到的几乎所有的地方(包括我自己)都是这么写的：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>int r = rand() % N;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>后来校招面试百度的时候，一位叫戈君的面试官无意中告诉我这么写是错的，我回来想了一想，果然是不对的。
+各位读者如果以前一直都是这么写的，不妨先不要继续看下去，自己思考一下错在什么地方。</p>
+
+<p>为了说明错在哪里，我们举一个简单的例子：
+我们假设rand()的返回的最大值是9，N等于7，那么rand()返回[0,6]时，直接返回该值；如果返回[7,9]时，则返回[0,2]，我们可以看出，返回0的概率是2/10，因为rand()得到0和7都会使结果为0，同理1和2的概率也是2/10，但是[3,6]中的数概率为1/10。这显然不符合均匀分布的定义。</p>
+
+<p>稍稍想想可以发现：问题出在了N不能整除rand()返回的范围，使得最后“少了一段”。
+试想上述情况中N=5，就不会发生这种情况，每一个值出现的概率都是2/10。</p>
+
+<p>为了解决这个问题，思路是这样的：假设rand()的返回值范围是[0, M)，我们需要在这个范围划分出N个bucket，然后随机一个数，看这个数落到哪个bucket里，那么就返回这个bucket的标号。每份的bucket的长度L为M/N，那么这个范围中最后还剩余M%N。
+如果rand() &lt; M - M%N，那么就返回该值/ L；否则就重试一遍，直到达到上述条件。</p>
+
+<p>用C++写出来代码是这样的：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>typedef unsigned long long ull
+</span><span class='line'>ull bucket_size = M/N;
+</span><span class='line'>ull remain = M%N;
+</span><span class='line'>ull r;
+</span><span class='line'>
+</span><span class='line'>do {
+</span><span class='line'>    r = rand();
+</span><span class='line'>} while (r &gt;= M - remain);
+</span><span class='line'>
+</span><span class='line'>return r/bucket_size;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这样返回值就是满足在[0,N-1]上的均匀分布。</p>
+
+<p>另外，想到了一道面试题：函数rand5可以返回在[1,5]上的一个随机数，满足均匀分布，如何用这个rand5来实现一个rand7（即可以返回[1,7]上的一个随机数）？这个题的本质和上述思想是一致的，读者诸君不妨想想如何求解。</p>
+
+    欢迎关注微信公众号<br>
+    <img src="/images/qrcode.jpeg" alt="qrcode">
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Jiashun Zhu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-01-07T17:40:00+01:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/12/20/lock-vs-lockfree/" title="Previous Post: 无锁是万能药吗">&laquo; 无锁是万能药吗</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2018/02/12/2017-summary/" title="Next Post: 2017工作小感">2017工作小感 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+
+  <section>
+  <!-- <h1>Comments</h1> -->
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
+
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (2)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+<script type="text/javascript" src="https://s4.cnzz.com/z_stat.php?id=1277859960&web_id=1277859960"></script> Copyright &copy; 2021 - Jiashun Zhu -
+</p>
+
+</footer>
+  
+  <script src="http://cdn.staticfile.org/jquery/2.0.0/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'zyearnsblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://zyearn.com/blog/2017/01/07/how-to-generate-uniform-distribution/';
+        var disqus_url = 'http://zyearn.com/blog/2017/01/07/how-to-generate-uniform-distribution/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+</body>
+</html>
