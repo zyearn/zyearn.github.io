@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: brpc | ]]></title>
-  <link href="http://zyearn.com/blog/categories/brpc/atom.xml" rel="self"/>
-  <link href="http://zyearn.com/"/>
-  <updated>2021-01-26T23:43:15+01:00</updated>
-  <id>http://zyearn.com/</id>
+  <link href="http://zyearn.github.io/blog/categories/brpc/atom.xml" rel="self"/>
+  <link href="http://zyearn.github.io/"/>
+  <updated>2021-01-26T23:50:59+01:00</updated>
+  <id>http://zyearn.github.io/</id>
   <author>
     <name><![CDATA[Jiashun Zhu]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[brpc在SDK灵活性方向的实践]]></title>
-    <link href="http://zyearn.com/blog/2020/02/29/brpc-sdk-flexibility/"/>
+    <link href="http://zyearn.github.io/blog/2020/02/29/brpc-sdk-flexibility/"/>
     <updated>2020-02-29T18:29:00+01:00</updated>
-    <id>http://zyearn.com/blog/2020/02/29/brpc-sdk-flexibility</id>
+    <id>http://zyearn.github.io/blog/2020/02/29/brpc-sdk-flexibility</id>
     <content type="html"><![CDATA[<p>如果有关注到brpc最新支持功能的朋友可能已经发现了，brpc在最近支持了redis server端的协议（redis client早已支持），使得brpc server可以接受来自redis client的命令，处理，并返回结果。通过实现brpc提供的命令回调函数，理论上完全可以用brpc来实现出一个redis server，但这并不是支持这个功能的初衷，我们的初衷是通过这个功能来解决SDK灵活性的问题。</p>
 
 <p>什么是SDK灵活性问题？想象这样一个场景：你正在为公司开发一个新系统，目前已经完成系统的基础功能，并对外发布SDK1.0，让公司内不同的团队可以接入你的系统。为了支持更多功能，会对系统进行迭代开发，此时SDK2.0就发布了，这会带来几个问题。</p>

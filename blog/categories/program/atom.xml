@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: program | ]]></title>
-  <link href="http://zyearn.com/blog/categories/program/atom.xml" rel="self"/>
-  <link href="http://zyearn.com/"/>
-  <updated>2021-01-26T23:43:15+01:00</updated>
-  <id>http://zyearn.com/</id>
+  <link href="http://zyearn.github.io/blog/categories/program/atom.xml" rel="self"/>
+  <link href="http://zyearn.github.io/"/>
+  <updated>2021-01-26T23:50:59+01:00</updated>
+  <id>http://zyearn.github.io/</id>
   <author>
     <name><![CDATA[Jiashun Zhu]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[如何生成[0, N)中的随机数]]></title>
-    <link href="http://zyearn.com/blog/2017/01/07/how-to-generate-uniform-distribution/"/>
+    <link href="http://zyearn.github.io/blog/2017/01/07/how-to-generate-uniform-distribution/"/>
     <updated>2017-01-07T17:40:00+01:00</updated>
-    <id>http://zyearn.com/blog/2017/01/07/how-to-generate-uniform-distribution</id>
+    <id>http://zyearn.github.io/blog/2017/01/07/how-to-generate-uniform-distribution</id>
     <content type="html"><![CDATA[<p>写程序的时候，经常会遇到这样的需求：已知rand函数，生成一个范围在[0, N)的随机数。
 比如我们有15个球，随机选择一个，则此时N等于15。
 在这个问题中，我们通常希望这个随机数是满足均匀分布（uniform distribution）的，即每个数字出现的概率是一样的。
@@ -69,9 +69,9 @@
   
   <entry>
     <title type="html"><![CDATA[无锁是万能药吗]]></title>
-    <link href="http://zyearn.com/blog/2016/12/20/lock-vs-lockfree/"/>
+    <link href="http://zyearn.github.io/blog/2016/12/20/lock-vs-lockfree/"/>
     <updated>2016-12-20T21:17:00+01:00</updated>
-    <id>http://zyearn.com/blog/2016/12/20/lock-vs-lockfree</id>
+    <id>http://zyearn.github.io/blog/2016/12/20/lock-vs-lockfree</id>
     <content type="html"><![CDATA[<p>经常会听到有人这样说，把某个地方的锁换成了无锁（lockfree）以后，性能提高了多少多少倍。
 不禁会让人产生疑问：是不是只要有锁的地方，换成lockfree后都可以提高性能呢？</p>
 
@@ -109,9 +109,9 @@
   
   <entry>
     <title type="html"><![CDATA[推荐一门课：6.828]]></title>
-    <link href="http://zyearn.com/blog/2016/02/24/recommmend-6-dot-828/"/>
+    <link href="http://zyearn.github.io/blog/2016/02/24/recommmend-6-dot-828/"/>
     <updated>2016-02-24T20:19:00+01:00</updated>
-    <id>http://zyearn.com/blog/2016/02/24/recommmend-6-dot-828</id>
+    <id>http://zyearn.github.io/blog/2016/02/24/recommmend-6-dot-828</id>
     <content type="html"><![CDATA[<p>这篇博文的目的是向大家推荐一门课：MIT的<a href="https://pdos.csail.mit.edu/6.828/2014/index.html">6.828</a>。</p>
 
 <p>这门课主要讲的是操作系统原理与实践，具体分三个部分：lectures，labs and readings。
@@ -166,9 +166,9 @@ Readings部分会阅读一些paper来了解一些更深入、更有意思的topi
   
   <entry>
     <title type="html"><![CDATA[参加饿了么编程马拉松感]]></title>
-    <link href="http://zyearn.com/blog/2015/12/02/eleme-hackathon/"/>
+    <link href="http://zyearn.github.io/blog/2015/12/02/eleme-hackathon/"/>
     <updated>2015-12-02T14:30:00+01:00</updated>
-    <id>http://zyearn.com/blog/2015/12/02/eleme-hackathon</id>
+    <id>http://zyearn.github.io/blog/2015/12/02/eleme-hackathon</id>
     <content type="html"><![CDATA[<p>饿了么在今年十一月的时候举办了一个黑客马拉松，官方主页在<a href="http://hackathon.ele.me/">这里</a>，看了简介以后我认为有两点比较吸引人。</p>
 
 <p>首先，比赛形式比较新颖，之前也参加过类似的马拉松以及听闻过很多XX编程马拉松，形式都是差不多的：接受组队报名，然后花上两天时间大家待在一个地方通宵编程实现一个和主办方做的事完全没有关系的创意，一般会在第二天下午开始做presentation，最后会根据评委打分决出获胜队伍。这种类型的比赛，根据我的观察，presentation是最重要的，其次是idea，最后才是技术。<!-- more -->而这次的饿了么举办的马拉松分初赛和决赛，初赛前10名进入决赛，初赛需要实现一个功能，最后评测完全靠的是实力和技术，分数公开透明。虽然还不知道决赛题目是什么，但也令人期待。</p>
@@ -309,9 +309,9 @@ golang  net/http    gopkg.in/redis.v3 coroutine   0.245ms
   
   <entry>
     <title type="html"><![CDATA[如何用C/C++写一个基于事件的爬虫]]></title>
-    <link href="http://zyearn.com/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c/"/>
+    <link href="http://zyearn.github.io/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c/"/>
     <updated>2015-09-09T20:52:00+02:00</updated>
-    <id>http://zyearn.com/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c</id>
+    <id>http://zyearn.github.io/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c</id>
     <content type="html"><![CDATA[<p>在去年三月份的时候，写过一篇<a href="http://zyearn.github.io/blog/2014/03/08/zhihu-spider/">文章</a>，讲了一下如何写一个知乎爬虫，爬下最高票的答案，并且把代码放到了<a href="https://github.com/zyearn/zhihuCrawler">github</a>。在这一年多的时间里，前前后后有很多人来问我关于这个爬虫的一些实现细节，在回答他们的同时发现自己原来的代码真是写得太烂了，最近正好有空，把代码和架构都重写了一下，不能再误人子弟了。</p>
 
 <!-- more -->

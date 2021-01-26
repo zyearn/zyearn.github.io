@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: computersystem | ]]></title>
-  <link href="http://zyearn.com/blog/categories/computersystem/atom.xml" rel="self"/>
-  <link href="http://zyearn.com/"/>
-  <updated>2021-01-26T23:43:15+01:00</updated>
-  <id>http://zyearn.com/</id>
+  <link href="http://zyearn.github.io/blog/categories/computersystem/atom.xml" rel="self"/>
+  <link href="http://zyearn.github.io/"/>
+  <updated>2021-01-26T23:50:59+01:00</updated>
+  <id>http://zyearn.github.io/</id>
   <author>
     <name><![CDATA[Jiashun Zhu]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[当执行kill -9 PID时系统发生了什么]]></title>
-    <link href="http://zyearn.com/blog/2015/03/22/what-happens-when-you-kill-a-process/"/>
+    <link href="http://zyearn.github.io/blog/2015/03/22/what-happens-when-you-kill-a-process/"/>
     <updated>2015-03-22T20:46:00+01:00</updated>
-    <id>http://zyearn.com/blog/2015/03/22/what-happens-when-you-kill-a-process</id>
+    <id>http://zyearn.github.io/blog/2015/03/22/what-happens-when-you-kill-a-process</id>
     <content type="html"><![CDATA[<p>我们时常遇到这样的需求：要杀死一个正在运行运行的进程。这时候可以在终端输入
 <code>
 kill -9 &lt;PID&gt;
@@ -491,9 +491,9 @@ kill -9 &lt;PID&gt;
   
   <entry>
     <title type="html"><![CDATA[异步vs非阻塞]]></title>
-    <link href="http://zyearn.com/blog/2014/03/29/sycron-vs-block/"/>
+    <link href="http://zyearn.github.io/blog/2014/03/29/sycron-vs-block/"/>
     <updated>2014-03-29T20:13:00+01:00</updated>
-    <id>http://zyearn.com/blog/2014/03/29/sycron-vs-block</id>
+    <id>http://zyearn.github.io/blog/2014/03/29/sycron-vs-block</id>
     <content type="html"><![CDATA[<p>在I/O模型中有两个概念特别容易混淆，就是同步和异步（synchronous vs nonsynchronous），阻塞和非阻塞（blocking vs nonblocking）的区别在什么地方。</p>
 
 <p>同步非阻塞可能吗，异步阻塞有可能吗？
@@ -559,9 +559,9 @@ kill -9 &lt;PID&gt;
   
   <entry>
     <title type="html"><![CDATA[CSAPP: how to write a Web Proxy]]></title>
-    <link href="http://zyearn.com/blog/2014/02/21/csapp-proxy-lab/"/>
+    <link href="http://zyearn.github.io/blog/2014/02/21/csapp-proxy-lab/"/>
     <updated>2014-02-21T20:59:00+01:00</updated>
-    <id>http://zyearn.com/blog/2014/02/21/csapp-proxy-lab</id>
+    <id>http://zyearn.github.io/blog/2014/02/21/csapp-proxy-lab</id>
     <content type="html"><![CDATA[<p>这个lab很有意思，要我们实现一个简单的多线程web proxy。看起来很简单，实现起来还是有很多细节需要考虑。这里是一个官方的<a href="http://csapp.cs.cmu.edu/public/proxylab.pdf" target="_blank">介绍</a>。一共写了一天多，功能不是非常完善，代码只能处理<code>GET</code>请求。</p>
 
 <p>整体的思路是这样的，proxy作为client和server的中间媒介，client发给请求给proxy，proxy然后把请求转发给server，再从server拿到response，然后再把这个response转发给client。也就是说proxy既是client的服务器，又是server的客户。所以这个lab涉及到了客户端编程和服务器端编程。</p>
@@ -595,9 +595,9 @@ kill -9 &lt;PID&gt;
   
   <entry>
     <title type="html"><![CDATA[CSAPP: Shell Lab]]></title>
-    <link href="http://zyearn.com/blog/2014/02/18/csapp-shell-lab/"/>
+    <link href="http://zyearn.github.io/blog/2014/02/18/csapp-shell-lab/"/>
     <updated>2014-02-18T15:46:00+01:00</updated>
-    <id>http://zyearn.com/blog/2014/02/18/csapp-shell-lab</id>
+    <id>http://zyearn.github.io/blog/2014/02/18/csapp-shell-lab</id>
     <content type="html"><![CDATA[<p>这个实验要求我们写一个简单的shell，能够执行一些内置的命令和系统提供的程序，比如echo和ps，这里是详细的<a href="http://csapp.cs.cmu.edu/public/shlab.pdf" target="_blank">要求</a>。这个shell需要提供最基础的功能，前台执行程序，后台执行程序，能从terminal接受SIGINT(ctrl+c)信号和SIGTSTP(ctrl+z)信号来终止和停止程序。</p>
 
 <p>整体框架是这样的：从stdin读入用户命令，然后parse这个命令，如果是内置命令(比如quit，退出shell的命令)，则立刻执行，否则<code>fork</code>一个子进程，用<code>execve</code>把子进程的地址空间替换为相应的程序。另外为了支持用户发送信号给shell，还需要写3个信号处理程序，分为处理SIGCHLD, SIGINT和SIGTSTP。</p>
@@ -635,9 +635,9 @@ kill -9 &lt;PID&gt;
   
   <entry>
     <title type="html"><![CDATA[CSAPP: Cache Lab]]></title>
-    <link href="http://zyearn.com/blog/2014/02/16/csapp-cache-lab/"/>
+    <link href="http://zyearn.github.io/blog/2014/02/16/csapp-cache-lab/"/>
     <updated>2014-02-16T11:52:00+01:00</updated>
-    <id>http://zyearn.com/blog/2014/02/16/csapp-cache-lab</id>
+    <id>http://zyearn.github.io/blog/2014/02/16/csapp-cache-lab</id>
     <content type="html"><![CDATA[<p>这个实验分为PART A和PART B。PART A要求我们写一个cache模拟器，PART B要求我们利用cache来优化一个矩阵的转置以达到cache miss最少。</p>
 
 <p>目前只完成了A部分，B部分等把CSAPP的其它实验全部做完了有空的话再回来做，剩下的几个lab也都很有意思。</p>

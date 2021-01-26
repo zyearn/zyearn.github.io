@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: algorithms | ]]></title>
-  <link href="http://zyearn.com/blog/categories/algorithms/atom.xml" rel="self"/>
-  <link href="http://zyearn.com/"/>
-  <updated>2021-01-26T23:43:15+01:00</updated>
-  <id>http://zyearn.com/</id>
+  <link href="http://zyearn.github.io/blog/categories/algorithms/atom.xml" rel="self"/>
+  <link href="http://zyearn.github.io/"/>
+  <updated>2021-01-26T23:50:59+01:00</updated>
+  <id>http://zyearn.github.io/</id>
   <author>
     <name><![CDATA[Jiashun Zhu]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[ABtest数学原理]]></title>
-    <link href="http://zyearn.com/blog/2019/05/22/how-to-judge-effectiveness-of-exp/"/>
+    <link href="http://zyearn.github.io/blog/2019/05/22/how-to-judge-effectiveness-of-exp/"/>
     <updated>2019-05-22T14:19:00+02:00</updated>
-    <id>http://zyearn.com/blog/2019/05/22/how-to-judge-effectiveness-of-exp</id>
+    <id>http://zyearn.github.io/blog/2019/05/22/how-to-judge-effectiveness-of-exp</id>
     <content type="html"><![CDATA[<h2>问题</h2>
 
 <p>假设现在有一个新的点击注册文案，想要测试它的效果，实验人员将实验分为对照组和实验组，给对照组看原来的文案，而给实验组看新的文档。实验结果是，对照组中的14500人中有1450人注册点击，而在实验组的14500人中有1600人点击注册，如何通过实验数据来判定新的文案是否优于老的文案？</p>
@@ -75,9 +75,9 @@
   
   <entry>
     <title type="html"><![CDATA[什么是可计算理论]]></title>
-    <link href="http://zyearn.com/blog/2013/06/28/what-is-computability/"/>
+    <link href="http://zyearn.github.io/blog/2013/06/28/what-is-computability/"/>
     <updated>2013-06-28T21:47:00+02:00</updated>
-    <id>http://zyearn.com/blog/2013/06/28/what-is-computability</id>
+    <id>http://zyearn.github.io/blog/2013/06/28/what-is-computability</id>
     <content type="html"><![CDATA[<p>这个学期刚好上这门课，此课绝对是CS课程中的神课，需要一定的决心和耐心才能啃下来。这篇文章可以说是一篇科普文，争求通俗易懂。</p>
 
 <p>可计算理论是计算理论的一个分支，还有两个分支分别是自动机和计算复杂性。</p>

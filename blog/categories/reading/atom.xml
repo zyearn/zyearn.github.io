@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: reading | ]]></title>
-  <link href="http://zyearn.com/blog/categories/reading/atom.xml" rel="self"/>
-  <link href="http://zyearn.com/"/>
-  <updated>2021-01-26T23:43:15+01:00</updated>
-  <id>http://zyearn.com/</id>
+  <link href="http://zyearn.github.io/blog/categories/reading/atom.xml" rel="self"/>
+  <link href="http://zyearn.github.io/"/>
+  <updated>2021-01-26T23:50:59+01:00</updated>
+  <id>http://zyearn.github.io/</id>
   <author>
     <name><![CDATA[Jiashun Zhu]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[《把时间当作朋友》读书笔记]]></title>
-    <link href="http://zyearn.com/blog/2014/02/28/make-friends-with-time/"/>
+    <link href="http://zyearn.github.io/blog/2014/02/28/make-friends-with-time/"/>
     <updated>2014-02-28T00:06:00+01:00</updated>
-    <id>http://zyearn.com/blog/2014/02/28/make-friends-with-time</id>
+    <id>http://zyearn.github.io/blog/2014/02/28/make-friends-with-time</id>
     <content type="html"><![CDATA[<p>看这本书的时候还是老版，现在都出到第三版了，听说章节安排和插图纸张都有变化。</p>
 
 <h2>第一章 心智的力量</h2>
@@ -103,9 +103,9 @@
   
   <entry>
     <title type="html"><![CDATA[读《CSAPP》感]]></title>
-    <link href="http://zyearn.com/blog/2014/02/25/csapp-thoughts/"/>
+    <link href="http://zyearn.github.io/blog/2014/02/25/csapp-thoughts/"/>
     <updated>2014-02-25T18:02:00+01:00</updated>
-    <id>http://zyearn.com/blog/2014/02/25/csapp-thoughts</id>
+    <id>http://zyearn.github.io/blog/2014/02/25/csapp-thoughts</id>
     <content type="html"><![CDATA[<p>寒假的时候花了一个月把这本<a href="http://book.douban.com/subject/3023631/" target="_blank">CSAPP</a>看完了，把它课程网站上的也lab做了一下。</p>
 
 <p>这本书让人有种相见恨晚的感觉，非常伟大的一本计算机导论书籍，写得实在太好了。它汇集了编译原理，操作系统，计算机组成，数电这些课程中的精华知识，然后作者能把这些东西的框架说清楚，不拘泥与细节，让人完整的了解了计算机系统的运作方式。据我的个人经验，在学校上的这些课程，比如编译原理，操作系统，只见树木不见森林，而这本书把这些孤立的知识点都连接了起来。</p>
@@ -127,9 +127,9 @@
   
   <entry>
     <title type="html"><![CDATA[最近在看的书]]></title>
-    <link href="http://zyearn.com/blog/2013/11/04/recent-done-20131104/"/>
+    <link href="http://zyearn.github.io/blog/2013/11/04/recent-done-20131104/"/>
     <updated>2013-11-04T23:55:00+01:00</updated>
-    <id>http://zyearn.com/blog/2013/11/04/recent-done-20131104</id>
+    <id>http://zyearn.github.io/blog/2013/11/04/recent-done-20131104</id>
     <content type="html"><![CDATA[<p>最近一直在实习，白天都很忙，只有业余时间才能读些书，做个小结吧。</p>
 
 <h2>人生元编程</h2>

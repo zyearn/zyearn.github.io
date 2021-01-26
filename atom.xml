@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[]]></title>
-  <link href="http://zyearn.com/atom.xml" rel="self"/>
-  <link href="http://zyearn.com/"/>
-  <updated>2021-01-26T23:43:15+01:00</updated>
-  <id>http://zyearn.com/</id>
+  <link href="http://zyearn.github.io/atom.xml" rel="self"/>
+  <link href="http://zyearn.github.io/"/>
+  <updated>2021-01-26T23:50:59+01:00</updated>
+  <id>http://zyearn.github.io/</id>
   <author>
     <name><![CDATA[Jiashun Zhu]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[brpc在SDK灵活性方向的实践]]></title>
-    <link href="http://zyearn.com/blog/2020/02/29/brpc-sdk-flexibility/"/>
+    <link href="http://zyearn.github.io/blog/2020/02/29/brpc-sdk-flexibility/"/>
     <updated>2020-02-29T18:29:00+01:00</updated>
-    <id>http://zyearn.com/blog/2020/02/29/brpc-sdk-flexibility</id>
+    <id>http://zyearn.github.io/blog/2020/02/29/brpc-sdk-flexibility</id>
     <content type="html"><![CDATA[<p>如果有关注到brpc最新支持功能的朋友可能已经发现了，brpc在最近支持了redis server端的协议（redis client早已支持），使得brpc server可以接受来自redis client的命令，处理，并返回结果。通过实现brpc提供的命令回调函数，理论上完全可以用brpc来实现出一个redis server，但这并不是支持这个功能的初衷，我们的初衷是通过这个功能来解决SDK灵活性的问题。</p>
 
 <p>什么是SDK灵活性问题？想象这样一个场景：你正在为公司开发一个新系统，目前已经完成系统的基础功能，并对外发布SDK1.0，让公司内不同的团队可以接入你的系统。为了支持更多功能，会对系统进行迭代开发，此时SDK2.0就发布了，这会带来几个问题。</p>
@@ -63,7 +63,7 @@
 </ol>
 
 
-<p><img src="http://zyearn.com/images/proxy.jpg" alt="proxy" /></p>
+<p><img src="http://zyearn.github.io/images/proxy.jpg" alt="proxy" /></p>
 
 <p>为了更好地理解，这里介绍一个可能的应用场景，在一个分布式key-value系统中的应用。这类系统一般的实现中包含一个metaserver集群，和数据节点集群，如果采取用户通过SDK方式来访问系统，这里做的事情简略来说是先访问metaserver得到数据节点分布等元信息，然后通过某种负载均衡的方式来访问数据节点，如果数据节点访问错误还得做重试，即使节点没挂，也会据业务层的错误码判断是否重试，总之这是一个非常复杂的SDK。如此复杂的SDK还得为每个语言都写一套，很难保证所有语言在某些逻辑上是完全一致的，不仅如此，多套语言的SDK的背后往往意味着巨大的维护成本。</p>
 
@@ -86,9 +86,9 @@
   
   <entry>
     <title type="html"><![CDATA[心理学阅读（一）]]></title>
-    <link href="http://zyearn.com/blog/2019/07/13/how-to-be-confident/"/>
+    <link href="http://zyearn.github.io/blog/2019/07/13/how-to-be-confident/"/>
     <updated>2019-07-13T18:46:00+02:00</updated>
-    <id>http://zyearn.com/blog/2019/07/13/how-to-be-confident</id>
+    <id>http://zyearn.github.io/blog/2019/07/13/how-to-be-confident</id>
     <content type="html"><![CDATA[<p>最近在读心理学相关的书籍，这次读的这本书是《医治受伤的自信》，本篇文章是这本书的读书笔记。作者从不同角度阐述了自信缺失对生活、工作以及各个方面对自身的影响，接着说了大多数人都会有的一些错误偏见，带着有色眼镜看世界会无法看到真实世界的样子，最后为了让自己更加自信，作者提出了一些非常有实践意义的建议。这本书推荐指数(4/5)。</p>
 
 <h1>阅读目的</h1>
@@ -206,9 +206,9 @@
   
   <entry>
     <title type="html"><![CDATA[ABtest数学原理]]></title>
-    <link href="http://zyearn.com/blog/2019/05/22/how-to-judge-effectiveness-of-exp/"/>
+    <link href="http://zyearn.github.io/blog/2019/05/22/how-to-judge-effectiveness-of-exp/"/>
     <updated>2019-05-22T14:19:00+02:00</updated>
-    <id>http://zyearn.com/blog/2019/05/22/how-to-judge-effectiveness-of-exp</id>
+    <id>http://zyearn.github.io/blog/2019/05/22/how-to-judge-effectiveness-of-exp</id>
     <content type="html"><![CDATA[<h2>问题</h2>
 
 <p>假设现在有一个新的点击注册文案，想要测试它的效果，实验人员将实验分为对照组和实验组，给对照组看原来的文案，而给实验组看新的文档。实验结果是，对照组中的14500人中有1450人注册点击，而在实验组的14500人中有1600人点击注册，如何通过实验数据来判定新的文案是否优于老的文案？</p>
@@ -219,7 +219,7 @@
 
 <p>首先看实验是否统计显著，即pvalue是否小于显著性水平，使用的方法是假设检验。具体方法是当零假设（两个版本没有区别）成立时，算出得到观测数据的概率pvalue，如果这个概率小于显著性水平，则拒绝零假设，实验结果显著。pvalue具体计算方式如下：
 假设p1,p2为两个版本的总体点击率，对控制组的样本均值设为X1bar，实验组的样本均值为X2bar，根据中心极限定理，X1bar和X2bar均满足正态分布。根据<a href="https://en.wikipedia.org/wiki/Sum_of_normally_distributed_random_variables">两个独立正态分布变量之和依旧是正态分布</a>，X1bvar-X2bar也满足正态分布。于是有
-<img src="http://zyearn.com/images/distri.png" alt="avatar" /></p>
+<img src="http://zyearn.github.io/images/distri.png" alt="avatar" /></p>
 
 <p>然后建立零假设p1-p2=0，并计算z-score，如果z-score大于显著性水平所在的临界值，那么就拒绝原假设，即p1不等于p2。这里需要注意的是，就算拒绝了原假设，它也是有概率成立的，只是这个概率太小，一般显著性水平alpha设置在0.05，那么只能说95%的概率原假设是不成立的。如果pvalue小于alpha，但是真实结果是p1等于p2，这类错误叫做第一类错误，让alpha的值较小可以降低这类错误的发生。</p>
 
@@ -279,9 +279,9 @@
   
   <entry>
     <title type="html"><![CDATA[2017工作小感]]></title>
-    <link href="http://zyearn.com/blog/2018/02/12/2017-summary/"/>
+    <link href="http://zyearn.github.io/blog/2018/02/12/2017-summary/"/>
     <updated>2018-02-12T18:23:00+01:00</updated>
-    <id>http://zyearn.com/blog/2018/02/12/2017-summary</id>
+    <id>http://zyearn.github.io/blog/2018/02/12/2017-summary</id>
     <content type="html"><![CDATA[<p>过去一年在百度学习了很多，踩过一些坑，也成长了很多，非常感谢帮助过我的人，这篇主要分享下自己的一些思考和想法，也和大家共勉。</p>
 
 <p>1.保持持续学习</p>
@@ -338,9 +338,9 @@
   
   <entry>
     <title type="html"><![CDATA[如何生成[0, N)中的随机数]]></title>
-    <link href="http://zyearn.com/blog/2017/01/07/how-to-generate-uniform-distribution/"/>
+    <link href="http://zyearn.github.io/blog/2017/01/07/how-to-generate-uniform-distribution/"/>
     <updated>2017-01-07T17:40:00+01:00</updated>
-    <id>http://zyearn.com/blog/2017/01/07/how-to-generate-uniform-distribution</id>
+    <id>http://zyearn.github.io/blog/2017/01/07/how-to-generate-uniform-distribution</id>
     <content type="html"><![CDATA[<p>写程序的时候，经常会遇到这样的需求：已知rand函数，生成一个范围在[0, N)的随机数。
 比如我们有15个球，随机选择一个，则此时N等于15。
 在这个问题中，我们通常希望这个随机数是满足均匀分布（uniform distribution）的，即每个数字出现的概率是一样的。
@@ -396,9 +396,9 @@
   
   <entry>
     <title type="html"><![CDATA[无锁是万能药吗]]></title>
-    <link href="http://zyearn.com/blog/2016/12/20/lock-vs-lockfree/"/>
+    <link href="http://zyearn.github.io/blog/2016/12/20/lock-vs-lockfree/"/>
     <updated>2016-12-20T21:17:00+01:00</updated>
-    <id>http://zyearn.com/blog/2016/12/20/lock-vs-lockfree</id>
+    <id>http://zyearn.github.io/blog/2016/12/20/lock-vs-lockfree</id>
     <content type="html"><![CDATA[<p>经常会听到有人这样说，把某个地方的锁换成了无锁（lockfree）以后，性能提高了多少多少倍。
 不禁会让人产生疑问：是不是只要有锁的地方，换成lockfree后都可以提高性能呢？</p>
 
@@ -436,9 +436,9 @@
   
   <entry>
     <title type="html"><![CDATA[回高中母校的演讲]]></title>
-    <link href="http://zyearn.com/blog/2016/04/30/speech-in-my-high-school/"/>
+    <link href="http://zyearn.github.io/blog/2016/04/30/speech-in-my-high-school/"/>
     <updated>2016-04-30T18:38:00+02:00</updated>
-    <id>http://zyearn.com/blog/2016/04/30/speech-in-my-high-school</id>
+    <id>http://zyearn.github.io/blog/2016/04/30/speech-in-my-high-school</id>
     <content type="html"><![CDATA[<p><img src="http://7d9pi3.com2.z0.glb.clouddn.com/DSC01674-min.JPG" /></p>
 
 <p>今年三月底，我被邀请回高中母校嘉二中给高一的学生做了一个20分钟的讲座，名字叫《如果我回到高一，我会做&hellip;&hellip;》。听母校的老师说，现在的高一学生，也就是00后，个性太张扬，有非常强的自主意识，希望有一个还是学生的学长能够给他们一点启发。个性张扬从我的角度来看是一件非常好的事情，正是因为他们还这么年轻，才会初生牛犊不怕虎。等经历了更多，犯了一些错，踩一些坑，自然就会成长或者收敛一些。所以我倒没有老师那样的担心，毕竟每一代人都有各自老师眼中的大问题，但每一代都成长得非常好。</p>
@@ -486,9 +486,9 @@
   
   <entry>
     <title type="html"><![CDATA[抽象与计算机课程]]></title>
-    <link href="http://zyearn.com/blog/2016/03/06/cs-courses-and-abstraction/"/>
+    <link href="http://zyearn.github.io/blog/2016/03/06/cs-courses-and-abstraction/"/>
     <updated>2016-03-06T21:43:00+01:00</updated>
-    <id>http://zyearn.com/blog/2016/03/06/cs-courses-and-abstraction</id>
+    <id>http://zyearn.github.io/blog/2016/03/06/cs-courses-and-abstraction</id>
     <content type="html"><![CDATA[<p>如果要问计算机领域中哪个思想对我的帮助最大，那么应该就是抽象（abstraction）了。本文主要介绍一下抽象以及它和计算机课程的关系。</p>
 
 <p>第一次接触抽象是我大学低年级学数据结构的时候，记得很清楚当时学一个概念叫抽象数据类型（abstract data type），大概意思就是一个数据结构，接口是一回事，实现是另一回事，比如栈，作为使用者你只需要知道它有push、pop、isEmpty等方法，但它的底层实现到底是array还是linked list，你是不需要知道的。</p>
@@ -542,9 +542,9 @@
   
   <entry>
     <title type="html"><![CDATA[推荐一门课：6.828]]></title>
-    <link href="http://zyearn.com/blog/2016/02/24/recommmend-6-dot-828/"/>
+    <link href="http://zyearn.github.io/blog/2016/02/24/recommmend-6-dot-828/"/>
     <updated>2016-02-24T20:19:00+01:00</updated>
-    <id>http://zyearn.com/blog/2016/02/24/recommmend-6-dot-828</id>
+    <id>http://zyearn.github.io/blog/2016/02/24/recommmend-6-dot-828</id>
     <content type="html"><![CDATA[<p>这篇博文的目的是向大家推荐一门课：MIT的<a href="https://pdos.csail.mit.edu/6.828/2014/index.html">6.828</a>。</p>
 
 <p>这门课主要讲的是操作系统原理与实践，具体分三个部分：lectures，labs and readings。
@@ -599,9 +599,9 @@ Readings部分会阅读一些paper来了解一些更深入、更有意思的topi
   
   <entry>
     <title type="html"><![CDATA[参加饿了么编程马拉松感]]></title>
-    <link href="http://zyearn.com/blog/2015/12/02/eleme-hackathon/"/>
+    <link href="http://zyearn.github.io/blog/2015/12/02/eleme-hackathon/"/>
     <updated>2015-12-02T14:30:00+01:00</updated>
-    <id>http://zyearn.com/blog/2015/12/02/eleme-hackathon</id>
+    <id>http://zyearn.github.io/blog/2015/12/02/eleme-hackathon</id>
     <content type="html"><![CDATA[<p>饿了么在今年十一月的时候举办了一个黑客马拉松，官方主页在<a href="http://hackathon.ele.me/">这里</a>，看了简介以后我认为有两点比较吸引人。</p>
 
 <p>首先，比赛形式比较新颖，之前也参加过类似的马拉松以及听闻过很多XX编程马拉松，形式都是差不多的：接受组队报名，然后花上两天时间大家待在一个地方通宵编程实现一个和主办方做的事完全没有关系的创意，一般会在第二天下午开始做presentation，最后会根据评委打分决出获胜队伍。这种类型的比赛，根据我的观察，presentation是最重要的，其次是idea，最后才是技术。<!-- more -->而这次的饿了么举办的马拉松分初赛和决赛，初赛前10名进入决赛，初赛需要实现一个功能，最后评测完全靠的是实力和技术，分数公开透明。虽然还不知道决赛题目是什么，但也令人期待。</p>
@@ -742,9 +742,9 @@ golang  net/http    gopkg.in/redis.v3 coroutine   0.245ms
   
   <entry>
     <title type="html"><![CDATA[如何用C/C++写一个基于事件的爬虫]]></title>
-    <link href="http://zyearn.com/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c/"/>
+    <link href="http://zyearn.github.io/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c/"/>
     <updated>2015-09-09T20:52:00+02:00</updated>
-    <id>http://zyearn.com/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c</id>
+    <id>http://zyearn.github.io/blog/2015/09/09/how-to-write-a-event-based-crawler-using-c</id>
     <content type="html"><![CDATA[<p>在去年三月份的时候，写过一篇<a href="http://zyearn.github.io/blog/2014/03/08/zhihu-spider/">文章</a>，讲了一下如何写一个知乎爬虫，爬下最高票的答案，并且把代码放到了<a href="https://github.com/zyearn/zhihuCrawler">github</a>。在这一年多的时间里，前前后后有很多人来问我关于这个爬虫的一些实现细节，在回答他们的同时发现自己原来的代码真是写得太烂了，最近正好有空，把代码和架构都重写了一下，不能再误人子弟了。</p>
 
 <!-- more -->
@@ -838,9 +838,9 @@ golang  net/http    gopkg.in/redis.v3 coroutine   0.245ms
   
   <entry>
     <title type="html"><![CDATA[如何写一个Web服务器]]></title>
-    <link href="http://zyearn.com/blog/2015/05/16/how-to-write-a-server/"/>
+    <link href="http://zyearn.github.io/blog/2015/05/16/how-to-write-a-server/"/>
     <updated>2015-05-16T17:39:00+02:00</updated>
-    <id>http://zyearn.com/blog/2015/05/16/how-to-write-a-server</id>
+    <id>http://zyearn.github.io/blog/2015/05/16/how-to-write-a-server</id>
     <content type="html"><![CDATA[<p>最近两个月的业余时间在写一个私人项目，目的是在Linux下写一个高性能Web服务器，名字叫Zaver。主体框架和基本功能已完成，还有一些高级功能日后会逐渐增加，代码放在了<a href="https://github.com/zyearn/zaver" target="_blank">github</a>。Zaver的框架会在代码量尽量少的情况下接近工业水平，而不像一些教科书上的toy server为了教原理而舍弃了很多原本server应该有的东西。
 在本篇文章中，我将一步步地阐明Zaver的设计方案和开发过程中遇到的困难以及相应的解决方法。</p>
 
@@ -1183,9 +1183,9 @@ Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。�
   
   <entry>
     <title type="html"><![CDATA[当执行kill -9 PID时系统发生了什么]]></title>
-    <link href="http://zyearn.com/blog/2015/03/22/what-happens-when-you-kill-a-process/"/>
+    <link href="http://zyearn.github.io/blog/2015/03/22/what-happens-when-you-kill-a-process/"/>
     <updated>2015-03-22T20:46:00+01:00</updated>
-    <id>http://zyearn.com/blog/2015/03/22/what-happens-when-you-kill-a-process</id>
+    <id>http://zyearn.github.io/blog/2015/03/22/what-happens-when-you-kill-a-process</id>
     <content type="html"><![CDATA[<p>我们时常遇到这样的需求：要杀死一个正在运行运行的进程。这时候可以在终端输入</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
@@ -1624,9 +1624,9 @@ Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。�
   
   <entry>
     <title type="html"><![CDATA[理解Javascript中的继承]]></title>
-    <link href="http://zyearn.com/blog/2015/02/08/understanding-inheritance-in-javascript/"/>
+    <link href="http://zyearn.github.io/blog/2015/02/08/understanding-inheritance-in-javascript/"/>
     <updated>2015-02-08T12:30:00+01:00</updated>
-    <id>http://zyearn.com/blog/2015/02/08/understanding-inheritance-in-javascript</id>
+    <id>http://zyearn.github.io/blog/2015/02/08/understanding-inheritance-in-javascript</id>
     <content type="html"><![CDATA[<p>在学习Javascript的过程中，哪个部分最隐涩难懂？就我个人而言，是基于原型链的继承机制。它和普通的OO语言如C++、Java中的继承在语法上相似，但内部实现则不同。Javascript里没有“类”的概念，熟悉C++、Java的同学要问了，没有类的话那哪来的继承呢？需要理解Javascript中的继承。首先得理解原型链。</p>
 
 <!-- more -->
@@ -1744,9 +1744,9 @@ Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。�
   
   <entry>
     <title type="html"><![CDATA[从一个外包项目中学到的]]></title>
-    <link href="http://zyearn.com/blog/2014/12/30/learn-from-a-outsourcing-project/"/>
+    <link href="http://zyearn.github.io/blog/2014/12/30/learn-from-a-outsourcing-project/"/>
     <updated>2014-12-30T23:36:00+01:00</updated>
-    <id>http://zyearn.com/blog/2014/12/30/learn-from-a-outsourcing-project</id>
+    <id>http://zyearn.github.io/blog/2014/12/30/learn-from-a-outsourcing-project</id>
     <content type="html"><![CDATA[<p>最近和一位大神同学做了一个网站外包项目，最近结束了，现在稍微总结一下。后台是用nodejs的express写的（话说express的作者认为express不好，然后又去发起了一个新的开源框架叫koa），对用node做web开发也有了一个地图式的了解。</p>
 
 <h3>哪一层解决问题很重要。</h3>
@@ -1782,9 +1782,9 @@ Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。�
   
   <entry>
     <title type="html"><![CDATA[如何访问NAT后的server]]></title>
-    <link href="http://zyearn.com/blog/2014/11/17/visit-server-behind-nat/"/>
+    <link href="http://zyearn.github.io/blog/2014/11/17/visit-server-behind-nat/"/>
     <updated>2014-11-17T11:48:00+01:00</updated>
-    <id>http://zyearn.com/blog/2014/11/17/visit-server-behind-nat</id>
+    <id>http://zyearn.github.io/blog/2014/11/17/visit-server-behind-nat</id>
     <content type="html"><![CDATA[<p>最近项目中有一个需求，需要访问NAT后面的一个restful server，这个NAT是由家用路由器产生的。现在的家用路由器都有端口转发的功能，配合上动态dns解析，这个问题就很容易解决。但是现在问题来了，我们面向的客户是普通用户，对他们而言路由器可能就是透明的，更别说要配置路由器了。所以我们得想其它不让用户参与的解决方案。</p>
 
 <!-- more -->
@@ -1846,9 +1846,9 @@ Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。�
   
   <entry>
     <title type="html"><![CDATA[为多说增加评论推送]]></title>
-    <link href="http://zyearn.com/blog/2014/09/14/add-noti-to-duoshuo/"/>
+    <link href="http://zyearn.github.io/blog/2014/09/14/add-noti-to-duoshuo/"/>
     <updated>2014-09-14T10:30:00+02:00</updated>
-    <id>http://zyearn.com/blog/2014/09/14/add-noti-to-duoshuo</id>
+    <id>http://zyearn.github.io/blog/2014/09/14/add-noti-to-duoshuo</id>
     <content type="html"><![CDATA[<p>先说下为什么会有这篇文章。</p>
 
 <p>曾经在搭博客的时候，使用的是disqus作为评论插件，使用了一阵后发现它有两个缺点，首先，它的加载速度非常慢，其次，很多人都没有disqus账号导致要注册才能评论。于是想找个本土化的评论系统，满足我的加载速度要求和可以通过社交平台账号登陆然后评论的要求。</p>
@@ -1944,9 +1944,9 @@ Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。�
   
   <entry>
     <title type="html"><![CDATA[服务器推送技术]]></title>
-    <link href="http://zyearn.com/blog/2014/08/13/server-push-nodejs/"/>
+    <link href="http://zyearn.github.io/blog/2014/08/13/server-push-nodejs/"/>
     <updated>2014-08-13T23:06:00+02:00</updated>
-    <id>http://zyearn.com/blog/2014/08/13/server-push-nodejs</id>
+    <id>http://zyearn.github.io/blog/2014/08/13/server-push-nodejs</id>
     <content type="html"><![CDATA[<p>服务器推送技术在现时代的网站中越来越流行，比如说，在你刷着微博的时候，有好友私信你，这时候后台的消息会实时推送到前台，在不刷新页面的前提下提示用户这条消息，显然这条消息是被“推”到客户端的，那么这个是怎么实现的呢？</p>
 
 <!-- more -->
@@ -1984,7 +1984,7 @@ Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。�
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;script src="http://zyearn.com/socket.io/socket.io.js"&gt;&lt;/script&gt;
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;script src="http://zyearn.github.io/socket.io/socket.io.js"&gt;&lt;/script&gt;
 </span><span class='line'>&lt;script&gt;
 </span><span class='line'>  var socket = io.connect('http://&lt;serverIP&gt;:&lt;port&gt;');
 </span><span class='line'>&lt;/script&gt;</span></code></pre></td></tr></table></div></figure>
@@ -2002,9 +2002,9 @@ Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。�
   
   <entry>
     <title type="html"><![CDATA[博客前端性能优化]]></title>
-    <link href="http://zyearn.com/blog/2014/08/05/optimize-website/"/>
+    <link href="http://zyearn.github.io/blog/2014/08/05/optimize-website/"/>
     <updated>2014-08-05T21:08:00+02:00</updated>
-    <id>http://zyearn.com/blog/2014/08/05/optimize-website</id>
+    <id>http://zyearn.github.io/blog/2014/08/05/optimize-website</id>
     <content type="html"><![CDATA[<h2>缘由</h2>
 
 <p>以前给主页index加了各种统计，字体，微博秀后，主页的载入速度实在太慢，加上本身的博客框架也需要优化，一直都没有时间做（其实是懒），最近终于受不了了，想要把主页的加载速度加快。这个博客的后台操作几乎没有，服务器是github pages，评论用的是第三方插件，所以优化余地只有前端。</p>
@@ -2076,9 +2076,9 @@ Zaver的代码风格参考了Nginx的风格，所以在可读性上非常高。�
   
   <entry>
     <title type="html"><![CDATA[在symmetric NAT中怎么实现p2p]]></title>
-    <link href="http://zyearn.com/blog/2014/07/19/how-p2p-in-symmetric-nat/"/>
+    <link href="http://zyearn.github.io/blog/2014/07/19/how-p2p-in-symmetric-nat/"/>
     <updated>2014-07-19T22:56:00+02:00</updated>
-    <id>http://zyearn.com/blog/2014/07/19/how-p2p-in-symmetric-nat</id>
+    <id>http://zyearn.github.io/blog/2014/07/19/how-p2p-in-symmetric-nat</id>
     <content type="html"><![CDATA[<p>最近在研究NAT穿越实现p2p技术，这个技术有很多广泛的应用，比如大家最熟悉的qq是怎么实现点对点传输文本的？A在一个局域网里，B在一个局域网里，他们怎么实现通信？这当中有什么困难？除了qq，一般的IM软件都有遇到这个问题，比如skype和facetime。一些下载软件也运用了p2p技术，就是边下载边上传文件块给那些没有这块文件的人，这个技术也要涉及NAT穿越。</p>
 
 <p>详细说之前，我们先说说背景知识。</p>

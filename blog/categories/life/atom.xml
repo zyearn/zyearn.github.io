@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: life | ]]></title>
-  <link href="http://zyearn.com/blog/categories/life/atom.xml" rel="self"/>
-  <link href="http://zyearn.com/"/>
-  <updated>2021-01-26T23:43:15+01:00</updated>
-  <id>http://zyearn.com/</id>
+  <link href="http://zyearn.github.io/blog/categories/life/atom.xml" rel="self"/>
+  <link href="http://zyearn.github.io/"/>
+  <updated>2021-01-26T23:50:59+01:00</updated>
+  <id>http://zyearn.github.io/</id>
   <author>
     <name><![CDATA[Jiashun Zhu]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[2017工作小感]]></title>
-    <link href="http://zyearn.com/blog/2018/02/12/2017-summary/"/>
+    <link href="http://zyearn.github.io/blog/2018/02/12/2017-summary/"/>
     <updated>2018-02-12T18:23:00+01:00</updated>
-    <id>http://zyearn.com/blog/2018/02/12/2017-summary</id>
+    <id>http://zyearn.github.io/blog/2018/02/12/2017-summary</id>
     <content type="html"><![CDATA[<p>过去一年在百度学习了很多，踩过一些坑，也成长了很多，非常感谢帮助过我的人，这篇主要分享下自己的一些思考和想法，也和大家共勉。</p>
 
 <p>1.保持持续学习</p>
@@ -74,9 +74,9 @@
   
   <entry>
     <title type="html"><![CDATA[回高中母校的演讲]]></title>
-    <link href="http://zyearn.com/blog/2016/04/30/speech-in-my-high-school/"/>
+    <link href="http://zyearn.github.io/blog/2016/04/30/speech-in-my-high-school/"/>
     <updated>2016-04-30T18:38:00+02:00</updated>
-    <id>http://zyearn.com/blog/2016/04/30/speech-in-my-high-school</id>
+    <id>http://zyearn.github.io/blog/2016/04/30/speech-in-my-high-school</id>
     <content type="html"><![CDATA[<p><img src="http://7d9pi3.com2.z0.glb.clouddn.com/DSC01674-min.JPG" /></p>
 
 <p>今年三月底，我被邀请回高中母校嘉二中给高一的学生做了一个20分钟的讲座，名字叫《如果我回到高一，我会做&hellip;&hellip;》。听母校的老师说，现在的高一学生，也就是00后，个性太张扬，有非常强的自主意识，希望有一个还是学生的学长能够给他们一点启发。个性张扬从我的角度来看是一件非常好的事情，正是因为他们还这么年轻，才会初生牛犊不怕虎。等经历了更多，犯了一些错，踩一些坑，自然就会成长或者收敛一些。所以我倒没有老师那样的担心，毕竟每一代人都有各自老师眼中的大问题，但每一代都成长得非常好。</p>

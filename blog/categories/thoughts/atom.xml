@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: thoughts | ]]></title>
-  <link href="http://zyearn.com/blog/categories/thoughts/atom.xml" rel="self"/>
-  <link href="http://zyearn.com/"/>
-  <updated>2021-01-26T23:43:15+01:00</updated>
-  <id>http://zyearn.com/</id>
+  <link href="http://zyearn.github.io/blog/categories/thoughts/atom.xml" rel="self"/>
+  <link href="http://zyearn.github.io/"/>
+  <updated>2021-01-26T23:50:59+01:00</updated>
+  <id>http://zyearn.github.io/</id>
   <author>
     <name><![CDATA[Jiashun Zhu]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[抽象与计算机课程]]></title>
-    <link href="http://zyearn.com/blog/2016/03/06/cs-courses-and-abstraction/"/>
+    <link href="http://zyearn.github.io/blog/2016/03/06/cs-courses-and-abstraction/"/>
     <updated>2016-03-06T21:43:00+01:00</updated>
-    <id>http://zyearn.com/blog/2016/03/06/cs-courses-and-abstraction</id>
+    <id>http://zyearn.github.io/blog/2016/03/06/cs-courses-and-abstraction</id>
     <content type="html"><![CDATA[<p>如果要问计算机领域中哪个思想对我的帮助最大，那么应该就是抽象（abstraction）了。本文主要介绍一下抽象以及它和计算机课程的关系。</p>
 
 <p>第一次接触抽象是我大学低年级学数据结构的时候，记得很清楚当时学一个概念叫抽象数据类型（abstract data type），大概意思就是一个数据结构，接口是一回事，实现是另一回事，比如栈，作为使用者你只需要知道它有push、pop、isEmpty等方法，但它的底层实现到底是array还是linked list，你是不需要知道的。</p>
@@ -71,9 +71,9 @@
   
   <entry>
     <title type="html"><![CDATA[本科毕设]]></title>
-    <link href="http://zyearn.com/blog/2014/06/23/bachelor-thesis/"/>
+    <link href="http://zyearn.github.io/blog/2014/06/23/bachelor-thesis/"/>
     <updated>2014-06-23T18:35:00+02:00</updated>
-    <id>http://zyearn.com/blog/2014/06/23/bachelor-thesis</id>
+    <id>http://zyearn.github.io/blog/2014/06/23/bachelor-thesis</id>
     <content type="html"><![CDATA[<p>上星期毕设终于答辩完了，本科的最后一件事也算完了。</p>
 
 <p>毕设看似做了三四个月，其实真正花的时候只有一个月不到吧。我觉得对于本科生而言，毕设做什么东西其实不重要，除了那些非常非常牛的人，比如香农在1936年的硕士论文，很少有人做的毕设是有大用途的（甚至可能小用途都没有）。</p>
@@ -93,9 +93,9 @@
   
   <entry>
     <title type="html"><![CDATA[看似努力]]></title>
-    <link href="http://zyearn.com/blog/2014/01/28/think-after-learn/"/>
+    <link href="http://zyearn.github.io/blog/2014/01/28/think-after-learn/"/>
     <updated>2014-01-28T16:41:00+01:00</updated>
-    <id>http://zyearn.com/blog/2014/01/28/think-after-learn</id>
+    <id>http://zyearn.github.io/blog/2014/01/28/think-after-learn</id>
     <content type="html"><![CDATA[<p>最近一直在思考一个问题，什么是真正的努力。</p>
 
 <p>前几天看到一个事情，说印度学生的努力程度比起欧美学生要高很多。只要一有时间，印度学生就会抓紧时间学习，看书，不会浪费丝毫时间。然后每年的大公司实习申请中，印度学生的申请占了申请总数的大部分。结果是，像facebook，或google这样的大公司的实习生录取名单中，欧美学生占了绝大多数，只有很少的印度学生。这说明了什么问题？</p>
@@ -151,9 +151,9 @@
   
   <entry>
     <title type="html"><![CDATA[想什么重要还是做什么重要]]></title>
-    <link href="http://zyearn.com/blog/2013/09/04/thoughts-not-important/"/>
+    <link href="http://zyearn.github.io/blog/2013/09/04/thoughts-not-important/"/>
     <updated>2013-09-04T00:10:00+02:00</updated>
-    <id>http://zyearn.com/blog/2013/09/04/thoughts-not-important</id>
+    <id>http://zyearn.github.io/blog/2013/09/04/thoughts-not-important</id>
     <content type="html"><![CDATA[<p>前几天看了篇文章，大概观点是</p>
 
 <blockquote><p>你想什么不重要，重要的是你做什么。</p></blockquote>
@@ -173,9 +173,9 @@
   
   <entry>
     <title type="html"><![CDATA[你能理解的，我也能理解]]></title>
-    <link href="http://zyearn.com/blog/2013/05/06/if-you-can-i-can/"/>
+    <link href="http://zyearn.github.io/blog/2013/05/06/if-you-can-i-can/"/>
     <updated>2013-05-06T21:11:00+02:00</updated>
-    <id>http://zyearn.com/blog/2013/05/06/if-you-can-i-can</id>
+    <id>http://zyearn.github.io/blog/2013/05/06/if-you-can-i-can</id>
     <content type="html"><![CDATA[<p>很多时候觉得人的智商真的有高有低，即对一个特定问题的反应快慢。但智商高低和理解力是两码事，比如说我智商低，但我通过一定时间的练习，你所理解的东西我也一定能理解。</p>
 
 <!-- more -->

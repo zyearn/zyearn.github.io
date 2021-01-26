@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: 
 
-Sitemap: http://zyearn.com/sitemap.xml 
+Sitemap: http://zyearn.github.io/sitemap.xml 
