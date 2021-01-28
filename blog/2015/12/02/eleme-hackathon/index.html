@@ -222,8 +222,6 @@ golang  net/http    gopkg.in/redis.v3 coroutine   0.245ms
 
 <p>结论就是，虽然官方实现有几点值得吐槽的地方（比如判定作弊的标准不太明确，导致可能有些选手即使想到了优化方法，然后觉得这个实际中不能用，就放弃了），为了性能牺牲掉了很多实用性（比如官方Go的实现没有可拓展性，假如来了一个需求说一个用户可以下多个订单，就要大改了），毕竟是个性能比赛。但确实有很多地方值得学习，根据这个特定的场景，redis数据库设计得非常简洁，大大减少了I/O次数（瓶颈），而且用了许多redis技巧和Go技巧，特别是发出异步redis请求的goroutine和channel的使用，对于初学Go的我帮助很大。</p>
 
-    欢迎关注微信公众号<br>
-    <img src="/images/qrcode.jpeg" alt="qrcode">
 </div>
 
 
@@ -293,7 +291,7 @@ golang  net/http    gopkg.in/redis.v3 coroutine   0.245ms
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (3)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/psychology'>psychology (1)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/algorithms'>algorithms (2)</a></li><li><a href='/blog/categories/brpc'>brpc (1)</a></li><li><a href='/blog/categories/computersystem'>computersystem (7)</a></li><li><a href='/blog/categories/life'>life (3)</a></li><li><a href='/blog/categories/program'>program (17)</a></li><li><a href='/blog/categories/reading'>reading (3)</a></li><li><a href='/blog/categories/thoughts'>thoughts (7)</a></li></ul>
 </section>
 
   
