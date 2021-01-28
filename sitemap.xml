@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
+<loc>http://zyearn.github.io/blog/2021/01/03/2020-thoughts/</loc>
+<lastmod>2021-01-03T22:17:58+01:00</lastmod>
+</url>
+<url>
 <loc>http://zyearn.github.io/blog/2020/02/29/brpc-sdk-flexibility/</loc>
 <lastmod>2020-02-29T18:29:00+01:00</lastmod>
 </url>
